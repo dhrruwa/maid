@@ -6,7 +6,7 @@ This repo has three parts:
 |---|---|
 | `supabase/` | The backend: database tables, history triggers, security rules, and the Edge Functions |
 | `owner_app/` | **Cook Dashboard**, the owner's app (Android + iPhone) |
-| `maid_app/` | **Cook Attendance**, the cook's app (Android) |
+| `maid_app/` | **Cook Attendance**, the cook's app (Android + iPhone) |
 
 Docs: `docs/API.md` (Edge Functions the maid app uses) and `docs/mobbin_references.md` (the UI reference for each screen).
 
@@ -80,6 +80,8 @@ static const firebaseIosAppId = ... defaultValue: '1:123:ios:...'    // owner ap
 ```
 The anon/publishable key is meant to be inside apps. **Never** put the `service_role` key in an app.
 
+If the anon key is left as `PASTE_YOUR_SUPABASE_ANON_KEY_HERE`, the apps still work: they call the Edge Functions directly, because every function checks the phone's device ID itself. Adding the key is still recommended, so calls go through the official `supabase_flutter` client.
+
 ## 7. Build the Android apps (APK)
 1. Install Flutter: <https://docs.flutter.dev/get-started/install> (Android Studio gives you the Android SDK).
 2. Build each app:
@@ -92,12 +94,14 @@ The anon/publishable key is meant to be inside apps. **Never** put the `service_
 ## 8. Install on the phones
 **Android:** send the APK to the phone (WhatsApp to yourself, Google Drive, or a USB cable) and tap it. Allow **"Install unknown apps"** when Android asks. Install the owner app on your phone and the maid app on the cook's phone.
 
-**iPhone (owner app):** connect the iPhone by cable (or the same Wi-Fi with Developer Mode on), then run:
+**iPhone (either app):** connect the iPhone by cable (or the same Wi-Fi with Developer Mode on), then run:
 ```bash
-cd owner_app
+cd owner_app                     # or maid_app
 flutter build ios --release
-flutter install --release        # or open ios/Runner.xcworkspace in Xcode and press ▶
+xcrun devicectl device install app --device <iPhone UDID> build/ios/iphoneos/Runner.app
+# (or: flutter install --release, or open ios/Runner.xcworkspace in Xcode and press ▶)
 ```
+Bundle IDs are `com.dhrruwa.cookdashboard` and `com.dhrruwa.cookattendance`, signed with team `T62SGQ3LT5`. To use a different Apple team, change it in Xcode → Runner → Signing & Capabilities.
 The first time, on the iPhone: **Settings → Privacy & Security → Developer Mode → On**, then **Settings → General → VPN & Device Management → trust your developer certificate**.
 
 ## 9. First use
@@ -117,7 +121,6 @@ The first time, on the iPhone: **Settings → Privacy & Security → Developer M
 | Problem | Fix |
 |---|---|
 | "You are not at the house" though she is | Settings → **Allowed distance**: raise it to 150–200 m. Check the house location was set from inside the house. |
-| App says "Supabase key missing" | Step 6: paste the anon key and build again. |
 | No notifications | Check the Firebase values in `config.dart`, the `FIREBASE_SERVICE_ACCOUNT` secret, and that notifications are allowed for the app on the phone. |
 | Reminders never come | Steps 3 and 4 (`CRON_SECRET` must match in both places). |
 | Cook changed phone | Owner app → Settings → **Pair a new phone**. The old phone stops working automatically. |

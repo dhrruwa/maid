@@ -5,7 +5,7 @@ Two Flutter apps and a Supabase backend for tracking a home cook's attendance, s
 | Part | Folder | Platform |
 |---|---|---|
 | Owner app – **Cook Dashboard** | `owner_app/` | Android, iPhone |
-| Maid app – **Cook Attendance** (English + ಕನ್ನಡ) | `maid_app/` | Android |
+| Maid app – **Cook Attendance** (English + ಕನ್ನಡ) | `maid_app/` | Android, iPhone |
 | Backend – Postgres schema, triggers, RLS, 34 Edge Functions, cron | `supabase/` | Supabase |
 
 - **Setup, build and install steps:** [docs/SETUP_GUIDE.md](docs/SETUP_GUIDE.md)
