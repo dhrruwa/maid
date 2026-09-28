@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config.dart';
@@ -33,7 +34,7 @@ Future<void> main() async {
     HomeScreen.refreshAll();
   });
 
-  if (AppConfig.supabaseConfigured && Device.paired) {
+  if (Device.paired) {
     OfflineQueue.start();
     Push.syncDevice();
   }
@@ -54,11 +55,14 @@ class CookApp extends StatelessWidget {
         scaffoldMessengerKey: messengerKey,
         theme: buildTheme(),
         themeMode: ThemeMode.light,
-        home: !AppConfig.supabaseConfigured
-            ? Scaffold(body: Center(child: Padding(padding: const EdgeInsets.all(32), child: Text(L.t('new_version_needed')))))
-            : Device.paired
-                ? const HomeScreen()
-                : const PairingScreen(),
+        locale: Locale(lang),
+        supportedLocales: const [Locale('en'), Locale('kn')],
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        home: Device.paired ? const HomeScreen() : const PairingScreen(),
       ),
     );
   }

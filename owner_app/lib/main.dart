@@ -48,7 +48,7 @@ class OwnerApp extends StatelessWidget {
       theme: buildTheme(Brightness.light),
       darkTheme: buildTheme(Brightness.dark),
       themeMode: ThemeMode.system,
-      home: AppConfig.supabaseConfigured ? const Root() : const _MissingKeys(),
+      home: const Root(),
     );
   }
 }
@@ -100,25 +100,5 @@ class _RootState extends State<Root> with WidgetsBindingObserver {
       });
     }
     return const Shell();
-  }
-}
-
-class _MissingKeys extends StatelessWidget {
-  const _MissingKeys();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: Padding(
-          padding: EdgeInsets.all(32),
-          child: Text(
-            'Supabase key missing.\n\nOpen lib/config.dart and paste your Supabase anon key, '
-            'then build the app again (see docs/SETUP_GUIDE.md).',
-            textAlign: TextAlign.center,
-          ),
-        ),
-      ),
-    );
   }
 }

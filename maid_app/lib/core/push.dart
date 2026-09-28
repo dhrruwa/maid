@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -18,9 +19,10 @@ class Push {
     if (!AppConfig.firebaseConfigured) return;
     try {
       await Firebase.initializeApp(
-        options: const FirebaseOptions(
+        options: FirebaseOptions(
           apiKey: AppConfig.firebaseApiKey,
-          appId: AppConfig.firebaseAppId,
+          appId: Platform.isIOS ? AppConfig.firebaseIosAppId : AppConfig.firebaseAppId,
+          iosBundleId: Platform.isIOS ? 'com.dhrruwa.cookattendance' : null,
           messagingSenderId: AppConfig.firebaseSenderId,
           projectId: AppConfig.firebaseProjectId,
         ),

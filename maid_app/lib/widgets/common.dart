@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../core/device.dart';
 import '../core/i18n.dart';
+import '../core/push.dart';
 import '../core/theme.dart';
 
 /// Language toggle – always visible in the top bar.
@@ -22,6 +24,7 @@ class LangButton extends StatelessWidget {
         onPressed: () async {
           await L.setLang(L.isKannada ? 'en' : 'kn');
           onChanged?.call();
+          if (Device.paired) Push.syncDevice();
         },
         icon: const Icon(Icons.translate_rounded, size: 20),
         label: Text(L.t('lang_switch'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),

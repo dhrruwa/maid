@@ -193,7 +193,7 @@ export async function computeMonth(
   const { first, last, days } = monthBounds(month);
   const startDate = toIst(new Date(house.created_at)).date;
 
-  const [att, hol, lv, pay, menus] = await Promise.all([
+  const [att, hol, lv, pay, menus, firstPair] = await Promise.all([
     sb.from("attendance").select("*").eq("house_id", house.id).is("deleted_at", null)
       .gte("date", first).lte("date", last),
     sb.from("holidays").select("id,date,slot,paid,note").eq("house_id", house.id)
@@ -204,8 +204,16 @@ export async function computeMonth(
     sb.from("payments").select("paid_on,total_amount").eq("house_id", house.id)
       .eq("month", month).maybeSingle(),
     menuFor(sb, house.id, first, last),
+    sb.from("cook_device").select("paired_at").eq("house_id", house.id)
+      .order("paired_at", { ascending: true }).limit(1).maybeSingle(),
   ]);
   const attendance = must(att) as Record<string, unknown>[];
+  // Missed visits only count once the maid phone was first paired, so the
+  // setup day (or days before pairing) never show up as "missed".
+  const pairedAt = (must(firstPair) as { paired_at: string } | null)?.paired_at;
+  const trackFromMs = pairedAt ? Date.parse(pairedAt) : Infinity;
+  const slotEndMs = (date: string, slot: Slot) =>
+    Date.parse(date + "T00:00:00Z") + (slotWindow(settings, slot)[1] - 330) * 60000;
   const holidays = must(hol) as MonthSummary["holidays"];
   const leaves = must(lv) as MonthSummary["leaves"];
   const payment = must(pay) as MonthSummary["payment"];
@@ -279,10 +287,10 @@ export async function computeMonth(
         const paid = approved.status === "approved_paid";
         info.state = paid ? "leave_paid" : "leave_unpaid";
         info.amount = paid ? rate : 0;
-      } else if (date < now.date) {
-        info.state = "missed";
+      } else if (date < now.date || (date === now.date && now.minutes >= slotWindow(settings, slot)[1])) {
+        info.state = slotEndMs(date, slot) <= trackFromMs ? "none" : "missed";
       } else if (date === now.date) {
-        info.state = now.minutes >= slotWindow(settings, slot)[1] ? "missed" : "pending";
+        info.state = "pending";
       } else {
         info.state = "upcoming";
       }

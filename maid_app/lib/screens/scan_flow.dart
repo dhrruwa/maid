@@ -40,7 +40,10 @@ Future<void> startScan(BuildContext context) async {
     context,
     MaterialPageRoute(builder: (_) => _Processing(qr: value, posFuture: posFuture, scannedAt: scannedAt)),
   );
-  if (result != null && context.mounted) await showResult(context, result);
+  if (result != null && context.mounted) {
+    await showResult(context, result);
+    HomeScreen.refreshAll();
+  }
 }
 
 Future<Position?> _position() async {
@@ -168,7 +171,6 @@ class _ProcessingState extends State<_Processing> {
       });
       final a = Map<String, dynamic>.from(r['attendance']);
       HomeScreen.justEarned = (a['amount'] as num?)?.toInt();
-      HomeScreen.refreshAll();
       if (mounted) {
         Navigator.pop(
           context,
@@ -189,7 +191,6 @@ class _ProcessingState extends State<_Processing> {
       isMocked: pos.isMocked,
       scannedAt: widget.scannedAt,
     );
-    HomeScreen.refreshAll();
     if (mounted) Navigator.pop(context, ScanResult.saved());
   }
 

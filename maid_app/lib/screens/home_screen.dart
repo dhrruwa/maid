@@ -313,7 +313,7 @@ class _SalaryCard extends StatelessWidget {
                     style: const TextStyle(fontSize: 46, fontWeight: FontWeight.w900, height: 1.1)),
               ),
               const SizedBox(width: 10),
-              if (bump != null && bump! > 0) _BumpChip(amount: bump!),
+              if (bump != null && bump! > 0) _BumpChip(key: ValueKey(earned), amount: bump!),
             ]),
             const SizedBox(height: 12),
             ClipRRect(
@@ -371,7 +371,7 @@ class _SalaryCard extends StatelessWidget {
 
 /// "+₹100" that floats up and fades after a scan.
 class _BumpChip extends StatelessWidget {
-  const _BumpChip({required this.amount});
+  const _BumpChip({super.key, required this.amount});
   final int amount;
 
   @override

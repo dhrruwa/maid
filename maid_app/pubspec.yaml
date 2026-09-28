@@ -12,6 +12,8 @@ dependencies:
   firebase_messaging: ^16.7.0
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   geolocator: ^14.1.1
   http: ^1.6.0
   intl: ^0.20.3
