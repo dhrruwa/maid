@@ -1,0 +1,106 @@
+project_id = "cook-dashboard"
+
+# The apps authenticate with device IDs checked inside each function,
+# so the Supabase JWT check is turned off for every function.
+
+[functions.copy_menu]
+verify_jwt = false
+
+[functions.create_house]
+verify_jwt = false
+
+[functions.decide_leave]
+verify_jwt = false
+
+[functions.delete_item]
+verify_jwt = false
+
+[functions.export_data]
+verify_jwt = false
+
+[functions.generate_pairing_token]
+verify_jwt = false
+
+[functions.generate_slip]
+verify_jwt = false
+
+[functions.get_activity]
+verify_jwt = false
+
+[functions.get_dashboard]
+verify_jwt = false
+
+[functions.get_house]
+verify_jwt = false
+
+[functions.get_live_salary]
+verify_jwt = false
+
+[functions.get_menu]
+verify_jwt = false
+
+[functions.get_menu_history]
+verify_jwt = false
+
+[functions.get_month_summary]
+verify_jwt = false
+
+[functions.list_dishes]
+verify_jwt = false
+
+[functions.list_leave]
+verify_jwt = false
+
+[functions.list_months]
+verify_jwt = false
+
+[functions.maid_reminder]
+verify_jwt = false
+
+[functions.mark_attendance]
+verify_jwt = false
+
+[functions.mark_paid]
+verify_jwt = false
+
+[functions.owner_edit_attendance]
+verify_jwt = false
+
+[functions.pair_cook]
+verify_jwt = false
+
+[functions.payday_reminder]
+verify_jwt = false
+
+[functions.regenerate_qr]
+verify_jwt = false
+
+[functions.request_leave]
+verify_jwt = false
+
+[functions.restore_item]
+verify_jwt = false
+
+[functions.restore_owner]
+verify_jwt = false
+
+[functions.save_dish]
+verify_jwt = false
+
+[functions.send_notification]
+verify_jwt = false
+
+[functions.set_holiday]
+verify_jwt = false
+
+[functions.set_menu]
+verify_jwt = false
+
+[functions.unpair_cook]
+verify_jwt = false
+
+[functions.update_device]
+verify_jwt = false
+
+[functions.update_settings]
+verify_jwt = false
