@@ -1,5 +1,3 @@
-import 'dart:io' show Platform;
-
 /// Keys for your own Supabase and Firebase projects.
 /// See docs/SETUP_GUIDE.md, steps 4 and 6.
 class AppConfig {
@@ -23,13 +21,9 @@ class AppConfig {
   static const firebaseSenderId = String.fromEnvironment('FIREBASE_SENDER_ID', defaultValue: '');
   static const firebaseProjectId = String.fromEnvironment('FIREBASE_PROJECT_ID', defaultValue: '');
 
-  /// iPhone only: Firebase → Project settings → Your apps → iOS app → App ID
-  /// (iOS push also needs an APNs key uploaded to Firebase).
-  static const firebaseIosAppId = String.fromEnvironment('FIREBASE_IOS_APP_ID', defaultValue: '');
-
   static bool get firebaseConfigured =>
       firebaseApiKey.isNotEmpty &&
-      (Platform.isIOS ? firebaseIosAppId.isNotEmpty : firebaseAppId.isNotEmpty) &&
+      firebaseAppId.isNotEmpty &&
       firebaseSenderId.isNotEmpty &&
       firebaseProjectId.isNotEmpty;
 
