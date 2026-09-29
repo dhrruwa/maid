@@ -351,6 +351,8 @@ class _CountsCard extends StatelessWidget {
       child: GridView.count(
         crossAxisCount: 2,
         shrinkWrap: true,
+        // No automatic safe-area / tab-bar padding inside the card.
+        padding: EdgeInsets.zero,
         physics: const NeverScrollableScrollPhysics(),
         mainAxisSpacing: 10,
         crossAxisSpacing: 10,

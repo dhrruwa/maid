@@ -1,4 +1,6 @@
-# Launch screen – regenerate with: dart run flutter_native_splash:create
+# Launch screen – to regenerate: flutter pub add --dev flutter_native_splash,
+# run: dart run flutter_native_splash:create, then remove the package again
+# (its iOS plugin breaks Swift Package Manager builds).
 flutter_native_splash:
   color: "#FFF6EE"
   color_dark: "#140E0B"

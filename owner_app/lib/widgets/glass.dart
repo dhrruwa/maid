@@ -213,110 +213,140 @@ class GlassNavItem {
   final String label;
 }
 
-/// Floating tab bar (Blinkit / iOS Liquid Glass style): a dark frosted glass
-/// capsule, a lighter glass "lens" that slides behind the selected tab, a
-/// two-tone selected icon (light saffron fill, saffron outline) and a bold
-/// label. The capsule stays dark in light and dark mode.
+/// Floating tab bar (Blinkit / iOS Liquid Glass style): a compact dark frosted
+/// glass capsule, centred near the bottom, with a lighter glass "lens" behind
+/// the selected tab. The lens follows [position] continuously (it tracks a
+/// page swipe and stretches a little mid-slide) and can itself be dragged
+/// along the bar. Selected tab: two-tone icon (light saffron fill, saffron
+/// outline) and a bold label. The capsule stays dark in light and dark mode.
 class GlassNavBar extends StatelessWidget {
-  const GlassNavBar({super.key, required this.index, required this.onTap, required this.items});
-  final int index;
+  const GlassNavBar({
+    super.key,
+    required this.position,
+    required this.onTap,
+    required this.items,
+    this.onDrag,
+    this.onDragEnd,
+  });
+
+  /// Fractional selected index, e.g. 1.4 while swiping from tab 1 to tab 2.
+  final double position;
   final ValueChanged<int> onTap;
   final List<GlassNavItem> items;
+  final ValueChanged<double>? onDrag;
+  final VoidCallback? onDragEnd;
 
   static const _capsule = Color(0xDB1C1613); // warm near-black glass
   static const _label = Color(0xFFF6EFE9);
+  static const _itemWidth = 72.0;
+  static const _pad = 4.0;
 
   @override
   Widget build(BuildContext context) {
-    final reduce = MediaQuery.of(context).disableAnimations;
-    const radius = 38.0;
-    return SafeArea(
-      top: false,
-      minimum: const EdgeInsets.fromLTRB(14, 0, 14, 10),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(radius),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.28), blurRadius: 26, offset: const Offset(0, 10))],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(radius),
-          child: BackdropFilter(
-            filter: ui.ImageFilter.compose(
-              outer: ColorFilter.matrix(_saturation(1.5)),
-              inner: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+    const radius = 30.0;
+    final selected = position.round().clamp(0, items.length - 1);
+    // Sits just above the iPhone home indicator (lower than a full safe area).
+    final bottom = (MediaQuery.paddingOf(context).bottom - 4).clamp(6.0, 60.0);
+    final width = items.length * _itemWidth + _pad * 2;
+    // Liquid stretch: the lens widens a little half-way between two tabs.
+    final frac = position - position.floorToDouble();
+    final stretch = 1 + 0.18 * (frac < 0.5 ? frac : 1 - frac) * 2;
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: bottom),
+      child: Align(
+        heightFactor: 1,
+        child: SizedBox(
+          width: width,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(radius),
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.28), blurRadius: 24, offset: const Offset(0, 9))],
             ),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: _capsule,
-                borderRadius: BorderRadius.circular(radius),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(7),
-                child: SizedBox(
-                  height: 64,
-                  child: LayoutBuilder(builder: (context, c) {
-                    final w = c.maxWidth / items.length;
-                    return Stack(children: [
-                      // The lens: a lighter glass pill behind the selected tab.
-                      AnimatedPositioned(
-                        duration: reduce ? Duration.zero : const Duration(milliseconds: 380),
-                        curve: Curves.easeOutBack,
-                        left: index * w,
-                        width: w,
-                        top: 0,
-                        bottom: 0,
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(radius - 7),
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [Colors.white.withValues(alpha: 0.22), Colors.white.withValues(alpha: 0.13)],
-                            ),
-                            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-                          ),
-                        ),
-                      ),
-                      Row(children: [
-                        for (var i = 0; i < items.length; i++)
-                          Expanded(
-                            child: Semantics(
-                              button: true,
-                              selected: i == index,
-                              label: items[i].label,
-                              excludeSemantics: true,
-                              child: GestureDetector(
-                                behavior: HitTestBehavior.opaque,
-                                onTap: () => onTap(i),
-                                child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                                  AnimatedScale(
-                                    scale: i == index ? 1.08 : 1,
-                                    duration: reduce ? Duration.zero : const Duration(milliseconds: 220),
-                                    curve: Curves.easeOutBack,
-                                    child: i == index
-                                        ? _TwoToneIcon(fill: items[i].selectedIcon, outline: items[i].icon)
-                                        : Icon(items[i].icon, color: _label, size: 28),
-                                  ),
-                                  const SizedBox(height: 3),
-                                  Text(
-                                    items[i].label,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.fade,
-                                    softWrap: false,
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: i == index ? FontWeight.w800 : FontWeight.w500,
-                                      color: _label,
-                                    ),
-                                  ),
-                                ]),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(radius),
+              child: BackdropFilter(
+                filter: ui.ImageFilter.compose(
+                  outer: ColorFilter.matrix(_saturation(1.5)),
+                  inner: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+                ),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: _capsule,
+                    borderRadius: BorderRadius.circular(radius),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(_pad),
+                    child: SizedBox(
+                      height: 52,
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.translucent,
+                        onHorizontalDragUpdate: onDrag == null
+                            ? null
+                            : (d) => onDrag!((d.localPosition.dx - _itemWidth / 2) / _itemWidth),
+                        onHorizontalDragEnd: onDragEnd == null ? null : (_) => onDragEnd!(),
+                        child: Stack(children: [
+                          // The lens: a lighter glass pill behind the selected tab.
+                          Positioned(
+                            left: position * _itemWidth - (_itemWidth * (stretch - 1)) / 2,
+                            width: _itemWidth * stretch,
+                            top: 0,
+                            bottom: 0,
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(radius - _pad),
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [Colors.white.withValues(alpha: 0.22), Colors.white.withValues(alpha: 0.13)],
+                                ),
+                                border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
                               ),
                             ),
                           ),
-                      ]),
-                    ]);
-                  }),
+                          Row(children: [
+                            for (var i = 0; i < items.length; i++)
+                              SizedBox(
+                                width: _itemWidth,
+                                child: Semantics(
+                                  button: true,
+                                  selected: i == selected,
+                                  label: items[i].label,
+                                  excludeSemantics: true,
+                                  child: GestureDetector(
+                                    behavior: HitTestBehavior.opaque,
+                                    onTap: () => onTap(i),
+                                    child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                                      AnimatedScale(
+                                        scale: i == selected ? 1.08 : 1,
+                                        duration: const Duration(milliseconds: 200),
+                                        curve: Curves.easeOutBack,
+                                        child: i == selected
+                                            ? _TwoToneIcon(fill: items[i].selectedIcon, outline: items[i].icon)
+                                            : Icon(items[i].icon, color: _label, size: 24),
+                                      ),
+                                      const SizedBox(height: 1),
+                                      Text(
+                                        items[i].label,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.fade,
+                                        softWrap: false,
+                                        style: TextStyle(
+                                          fontSize: 11.5,
+                                          fontWeight: i == selected ? FontWeight.w800 : FontWeight.w500,
+                                          color: _label,
+                                        ),
+                                      ),
+                                    ]),
+                                  ),
+                                ),
+                              ),
+                          ]),
+                        ]),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -337,8 +367,8 @@ class _TwoToneIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Stack(alignment: Alignment.center, children: [
-      Icon(fill, color: const Color(0xFFFFC08A), size: 28),
-      Icon(outline, color: accent, size: 28),
+      Icon(fill, color: const Color(0xFFFFC08A), size: 24),
+      Icon(outline, color: accent, size: 24),
     ]);
   }
 }
