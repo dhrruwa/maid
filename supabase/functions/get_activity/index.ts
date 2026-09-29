@@ -173,7 +173,11 @@ function describe(r: Row, dishNames: Map<string, string>, memberNames: Map<strin
       if (!o.active && n.active) return `${W} restored family member ${name}`;
       const parts: string[] = [];
       if (o.name !== n.name) parts.push(`${W} renamed family member ${o.name} → ${n.name}`);
-      if (o.pin_hash !== n.pin_hash) {
+      // set_pin is the only owner write that clears the wrong-PIN counter, so an
+      // owner update that unlocks a member is a PIN reset even to the same PIN.
+      const ownerUnlock = r.actor === "owner" && (Number(o.failed_attempts) > 0 || !!o.locked_until) &&
+        !Number(n.failed_attempts) && !n.locked_until;
+      if (o.pin_hash !== n.pin_hash || ownerUnlock) {
         parts.push(`${W} reset ${name}'s PIN`);
       } else if (o.device_id !== n.device_id) {
         if (n.device_id && !o.device_id) parts.push(`${name} linked a phone`);
@@ -260,7 +264,7 @@ handle(async (body) => {
     }
     if (r.entity_type === "monthly_snapshots" && r.action === "update") return false;
     // Wrong-PIN counters and push-token refreshes (a lockout is still shown).
-    if (r.entity_type === "members" && r.action === "update") {
+    if (r.entity_type === "members" && r.action === "update" && r.actor !== "owner") {
       const ch = changes(r.old_value, r.new_value);
       if (ch.every((k) => MEMBER_NOISE.includes(k))) return false;
       if (ch.every((k) => [...MEMBER_NOISE, "locked_until"].includes(k)) && !r.new_value?.locked_until) {

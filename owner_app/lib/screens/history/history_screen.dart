@@ -231,11 +231,12 @@ class _ActivityTabState extends State<ActivityTab> with AutomaticKeepAliveClient
               ),
             ),
           const VerticalDivider(),
-          for (final a in ['owner', 'maid', 'system'])
+          // 'member' = anyone using the Family app (get_activity filters by it).
+          for (final (a, label) in const [('owner', 'Owner'), ('maid', 'Maid'), ('member', 'Family'), ('system', 'System')])
             Padding(
               padding: const EdgeInsets.only(right: 8),
               child: ChoiceChip(
-                label: Text(a[0].toUpperCase() + a.substring(1)),
+                label: Text(label),
                 selected: _actor == a,
                 onSelected: (v) {
                   setState(() => _actor = v ? a : null);

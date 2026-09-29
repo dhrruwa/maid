@@ -21,7 +21,13 @@ class HistoryScreen extends StatelessWidget {
           title: Text(L.t('my_history')),
           bottom: TabBar(
             labelStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
-            tabs: [Tab(text: L.t('months')), Tab(text: L.t('past_menus')), Tab(text: L.t('leave_tab'))],
+            labelPadding: const EdgeInsets.symmetric(horizontal: 8),
+            // A label that doesn't fit (small phone, Kannada, large text) is
+            // shrunk a little instead of being cut off ("Past menu…").
+            tabs: [
+              for (final key in const ['months', 'past_menus', 'leave_tab'])
+                Tab(child: FittedBox(fit: BoxFit.scaleDown, child: Text(L.t(key), maxLines: 1))),
+            ],
           ),
         ),
         body: const TabBarView(children: [_Months(), _PastMenus(), _Leaves()]),

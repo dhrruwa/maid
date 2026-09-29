@@ -79,7 +79,10 @@ class _LeaveScreenState extends State<LeaveScreen> with CachedLoad {
               borderRadius: BorderRadius.circular(18),
               onTap: () => setState(() => _slot = slot),
               child: Container(
-                height: 88,
+                // At least 88 high, taller when the label needs two lines
+                // (Kannada, large text) instead of overflowing.
+                constraints: const BoxConstraints(minHeight: 88),
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(18),
@@ -111,8 +114,8 @@ class _LeaveScreenState extends State<LeaveScreen> with CachedLoad {
             borderRadius: BorderRadius.circular(18),
             onTap: _pickDate,
             child: Container(
-              height: 70,
-              padding: const EdgeInsets.symmetric(horizontal: 18),
+              constraints: const BoxConstraints(minHeight: 70),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(color: Colors.white, width: 2),
@@ -129,11 +132,14 @@ class _LeaveScreenState extends State<LeaveScreen> with CachedLoad {
         const SizedBox(height: 20),
         Text(L.t('leave_which'), style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
         const SizedBox(height: 8),
-        Row(children: [
-          slotButton('morning', Icons.wb_sunny_rounded),
-          slotButton('evening', Icons.nights_stay_rounded),
-          slotButton('full', Icons.today_rounded),
-        ]),
+        // Same height for all three, even when only one label wraps.
+        IntrinsicHeight(
+          child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            slotButton('morning', Icons.wb_sunny_rounded),
+            slotButton('evening', Icons.nights_stay_rounded),
+            slotButton('full', Icons.today_rounded),
+          ]),
+        ),
         const SizedBox(height: 20),
         TextField(
           controller: _reason,

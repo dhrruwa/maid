@@ -52,6 +52,11 @@ Future<String?> askText(
         controller: ctl,
         autofocus: true,
         maxLength: maxLength,
+        // Wraps instead of scrolling sideways, so a long note can be read
+        // back before saving. "Done" still saves (no new lines).
+        minLines: 1,
+        maxLines: 4,
+        textInputAction: TextInputAction.done,
         textCapitalization: TextCapitalization.sentences,
         style: const TextStyle(fontSize: 18),
         decoration: InputDecoration(hintText: hint),

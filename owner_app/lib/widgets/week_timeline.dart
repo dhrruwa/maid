@@ -178,6 +178,10 @@ String _hourLabel(int minute) => DateFormat('h a').format(DateTime(2000, 1, 1, m
 
 const _labelWidth = 46.0;
 
+/// Width of the day labels: grows with the text size so "Today" / "23 Sep"
+/// never wrap (the axis header uses the same width to stay aligned).
+double _labelWidthOf(BuildContext context) => _labelWidth * MediaQuery.textScalerOf(context).scale(12) / 12;
+
 class _AxisHeader extends StatelessWidget {
   const _AxisHeader({required this.win, required this.color});
   final TimelineWindows win;
@@ -186,7 +190,7 @@ class _AxisHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(children: [
-      const SizedBox(width: _labelWidth),
+      SizedBox(width: _labelWidthOf(context)),
       Expanded(
         child: SizedBox(
           height: 16,
@@ -241,11 +245,18 @@ class _DayRow extends StatelessWidget {
     final date = DateTime.parse('${day['date']}');
     return Row(children: [
       SizedBox(
-        width: _labelWidth,
+        width: _labelWidthOf(context),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(isToday ? 'Today' : DateFormat('EEE').format(date),
-              style: TextStyle(fontSize: 12, fontWeight: isToday ? FontWeight.w800 : FontWeight.w600, color: isToday ? ink : textColor)),
-          Text(DateFormat('d MMM').format(date), style: TextStyle(fontSize: 10, color: textColor.withValues(alpha: 0.6))),
+              maxLines: 1,
+              softWrap: false,
+              style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: isToday ? FontWeight.w800 : FontWeight.w600,
+                  // ink in light mode, its light variant in dark mode.
+                  color: isToday ? Theme.of(context).colorScheme.primary : textColor)),
+          Text(DateFormat('d MMM').format(date),
+              maxLines: 1, softWrap: false, style: TextStyle(fontSize: 10, color: textColor.withValues(alpha: 0.6))),
         ]),
       ),
       Expanded(

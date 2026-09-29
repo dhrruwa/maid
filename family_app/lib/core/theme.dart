@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show SystemUiOverlayStyle;
 import 'package:intl/intl.dart';
 
 import '../widgets/glass.dart';
@@ -49,6 +50,13 @@ ThemeData buildTheme() {
       TargetPlatform.iOS: GlassPageTransitionsBuilder(CupertinoPageTransitionsBuilder()),
     }),
     appBarTheme: AppBarTheme(
+      // Dark status bar icons: a transparent app bar would otherwise count as
+      // "dark" and get white icons, unreadable over the light saffron glow.
+      systemOverlayStyle: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark, // Android
+        statusBarBrightness: Brightness.light, // iOS
+      ),
       backgroundColor: Colors.transparent,
       surfaceTintColor: Colors.transparent,
       scrolledUnderElevation: 0,
@@ -78,7 +86,10 @@ ThemeData buildTheme() {
         minimumSize: const WidgetStatePropertyAll(Size(56, 52)),
         textStyle: const WidgetStatePropertyAll(TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
         shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadius.circular(18))),
-        foregroundBuilder: (context, states, child) => GlassHighlight(radius: 18, child: child!),
+        // The sheen covers the whole button face, behind the label. (As a
+        // foregroundBuilder it only covered the label's box: a lighter pill
+        // behind "Book evening" that looked like selected text.)
+        backgroundBuilder: (context, states, child) => GlassHighlight(radius: 18, child: child!),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(

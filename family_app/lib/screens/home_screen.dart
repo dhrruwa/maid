@@ -463,7 +463,8 @@ class _SlotCard extends StatelessWidget {
     final off = data['off'] is Map ? Map<String, dynamic>.from(data['off'] as Map) : null;
     final booked = data['booked'] == true;
     final open = _canChange;
-    final until = istTime(data['cutoff']);
+    // "9:00 PM" never splits over two lines (the hint may wrap with large text).
+    final until = istTime(data['cutoff'])?.replaceAll(' ', '\u00A0');
     final note = data['note'] is String ? (data['note'] as String).trim() : null;
     final hasNote = note != null && note.isNotEmpty;
 
@@ -513,6 +514,9 @@ class _SlotCard extends StatelessWidget {
                   child: Text(
                     hint,
                     textAlign: TextAlign.end,
+                    // Two lines, so large text shows "Book until" over the
+                    // time instead of cutting the time off.
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 14,
@@ -701,32 +705,49 @@ class _Eating extends StatelessWidget {
   void _sheet(BuildContext context) {
     final people = _people;
     final me = Device.name.trim().toLowerCase();
+    // Tall enough for a whole family with notes; the title stays put while
+    // the list scrolls.
     showModalBottomSheet(
       context: context,
       showDragHandle: true,
+      isScrollControlled: true,
+      constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.85),
       builder: (c) => SafeArea(
-        child: ListView(
-          shrinkWrap: true,
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('${people.length} eating · $title', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
-            const SizedBox(height: 8),
-            for (final p in people)
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: CircleAvatar(
-                  backgroundColor: tint,
-                  foregroundColor: espresso,
-                  child: Text(_initial('${p['name']}'), style: const TextStyle(fontWeight: FontWeight.w800)),
-                ),
-                title: Text(
-                  '${p['name']}${'${p['name']}'.trim().toLowerCase() == me ? ' (you)' : ''}',
-                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
-                ),
-                subtitle: (p['note'] is String && (p['note'] as String).trim().isNotEmpty)
-                    ? Text('${p['note']}', style: const TextStyle(fontSize: 15))
-                    : null,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+              child: Text(
+                '${people.length} eating · $title',
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
               ),
+            ),
+            Flexible(
+              child: ListView(
+                shrinkWrap: true,
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                children: [
+                  for (final p in people)
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: CircleAvatar(
+                        backgroundColor: tint,
+                        foregroundColor: espresso,
+                        child: Text(_initial('${p['name']}'), style: const TextStyle(fontWeight: FontWeight.w800)),
+                      ),
+                      title: Text(
+                        '${p['name']}${'${p['name']}'.trim().toLowerCase() == me ? ' (you)' : ''}',
+                        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+                      ),
+                      subtitle: (p['note'] is String && (p['note'] as String).trim().isNotEmpty)
+                          ? Text('${p['note']}', style: const TextStyle(fontSize: 15))
+                          : null,
+                    ),
+                ],
+              ),
+            ),
           ],
         ),
       ),

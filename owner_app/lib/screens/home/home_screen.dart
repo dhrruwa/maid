@@ -383,7 +383,11 @@ class _MenuPreview extends StatelessWidget {
   Widget _row(BuildContext context, IconData i, String label, String v, Bookings? b) => Row(children: [
         Icon(i, size: 20),
         const SizedBox(width: 8),
-        SizedBox(width: 70, child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600))),
+        // Grows with the text size so "Morning" never wraps mid-word.
+        SizedBox(
+          width: 70 * MediaQuery.textScalerOf(context).scale(14) / 14,
+          child: Text(label, maxLines: 1, softWrap: false, style: const TextStyle(fontWeight: FontWeight.w600)),
+        ),
         Expanded(child: Text(v, maxLines: 2, overflow: TextOverflow.ellipsis)),
         if (b != null) ...[const SizedBox(width: 8), _EatingCount(b.count)],
       ]);
@@ -428,21 +432,25 @@ class _CountsCard extends StatelessWidget {
       ('Holidays', counts['holidays'], Icons.beach_access_rounded, StatusColors.holiday),
       ('Leaves', counts['leaves'], Icons.event_busy_rounded, StatusColors.leave),
     ];
+    final stats = [
+      for (final (label, v, icon, color) in items) Stat(label: label, value: '$v', icon: icon, color: color),
+    ];
+    // Two per row, each row as tall as its content (a fixed aspect ratio
+    // clipped the labels, even at the default text size).
     return SectionCard(
       title: 'This month',
-      child: GridView.count(
-        crossAxisCount: 2,
-        shrinkWrap: true,
-        // No automatic safe-area / tab-bar padding inside the card.
-        padding: EdgeInsets.zero,
-        physics: const NeverScrollableScrollPhysics(),
-        mainAxisSpacing: 10,
-        crossAxisSpacing: 10,
-        childAspectRatio: 2.6,
-        children: [
-          for (final (label, v, icon, color) in items) Stat(label: label, value: '$v', icon: icon, color: color),
+      child: Column(children: [
+        for (var i = 0; i < stats.length; i += 2) ...[
+          if (i > 0) const SizedBox(height: 10),
+          IntrinsicHeight(
+            child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              Expanded(child: stats[i]),
+              const SizedBox(width: 10),
+              Expanded(child: i + 1 < stats.length ? stats[i + 1] : const SizedBox()),
+            ]),
+          ),
         ],
-      ),
+      ]),
     );
   }
 }

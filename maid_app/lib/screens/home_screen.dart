@@ -206,25 +206,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             ),
             // Rebuilt after every reload so a new scan shows up straight away.
             WeekTimeline(key: ValueKey(_loads)),
-            Row(children: [
-              Expanded(
-                child: BigButton(
-                  icon: Icons.event_busy_rounded,
-                  label: L.t('request_leave'),
-                  filled: false,
-                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LeaveScreen())),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: BigButton(
-                  icon: Icons.history_rounded,
-                  label: L.t('my_history'),
-                  filled: false,
-                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HistoryScreen())),
-                ),
-              ),
-            ]),
+            const _MoreButtons(),
           ];
     return Scaffold(
       appBar: AppBar(
@@ -247,6 +229,33 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 itemBuilder: (_, i) => EntryAnimation(index: i, child: sections[i]),
               ),
             ),
+    );
+  }
+}
+
+/// Request leave · My history: side by side, or one under the other on a
+/// narrow phone (side by side, "ನನ್ನ ಇತಿಹಾಸ" broke in the middle of a word).
+class _MoreButtons extends StatelessWidget {
+  const _MoreButtons();
+
+  @override
+  Widget build(BuildContext context) {
+    final leave = BigButton(
+      icon: Icons.event_busy_rounded,
+      label: L.t('request_leave'),
+      filled: false,
+      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LeaveScreen())),
+    );
+    final history = BigButton(
+      icon: Icons.history_rounded,
+      label: L.t('my_history'),
+      filled: false,
+      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HistoryScreen())),
+    );
+    return LayoutBuilder(
+      builder: (context, c) => c.maxWidth < 360
+          ? Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [leave, const SizedBox(height: 12), history])
+          : Row(children: [Expanded(child: leave), const SizedBox(width: 12), Expanded(child: history)]),
     );
   }
 }
@@ -290,7 +299,10 @@ class _SalaryCard extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       showDragHandle: true,
-      builder: (c) => Padding(
+      // Sized to its content and scrollable: in Kannada on a small phone the
+      // rows wrap and the default (9/16 of the screen) cut off the Total.
+      isScrollControlled: true,
+      builder: (c) => SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
         child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(L.t('breakdown_title'), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
@@ -491,7 +503,9 @@ class _CookCard extends StatelessWidget {
           Row(children: [
             const Icon(Icons.restaurant_menu_rounded, color: accent, size: 28),
             const SizedBox(width: 8),
-            Text(L.t('what_to_cook'), style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w800)),
+            Expanded(
+              child: Text(L.t('what_to_cook'), style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w800)),
+            ),
           ]),
           const SizedBox(height: 12),
           SegmentedButton<int>(

@@ -88,6 +88,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final scheme = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.all(3),
+      // Fill the day cell: table_calendar lays cells out in a Stack (loose
+      // constraints), so without this the circle shrank to the number and the
+      // menu icon was drawn over the digits.
+      constraints: const BoxConstraints.expand(),
       decoration: BoxDecoration(
         color: filled ? color.withValues(alpha: 0.85) : (status == 'grey' ? scheme.surfaceContainerHighest : null),
         shape: BoxShape.circle,
@@ -115,6 +119,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final s = _months[_month];
     final error = _errors[_month];
     final today = istToday();
+    final scheme = Theme.of(context).colorScheme;
     return RefreshIndicator(
       onRefresh: _load,
       child: ListView(padding: EdgeInsets.fromLTRB(12, 0, 12, 24 + MediaQuery.paddingOf(context).bottom), children: [
@@ -129,6 +134,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
               startingDayOfWeek: StartingDayOfWeek.monday,
               availableCalendarFormats: const {CalendarFormat.month: 'Month'},
               headerStyle: const HeaderStyle(formatButtonVisible: false, titleCentered: true),
+              // The package's default greys (#4F4F4F) are unreadable in dark mode.
+              daysOfWeekStyle: DaysOfWeekStyle(
+                weekdayStyle: TextStyle(color: scheme.onSurface.withValues(alpha: 0.75)),
+                weekendStyle: TextStyle(color: scheme.onSurface.withValues(alpha: 0.55)),
+              ),
               rowHeight: 48,
               onPageChanged: (d) {
                 setState(() => _focused = d);

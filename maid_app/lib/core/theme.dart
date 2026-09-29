@@ -37,7 +37,10 @@ ThemeData buildTheme() {
     onSurface: espresso,
   );
   final base = ThemeData(useMaterial3: true, colorScheme: scheme);
-  final tt = base.textTheme.apply(fontSizeFactor: 1.12, bodyColor: espresso, displayColor: espresso);
+  // No fontSizeFactor: the base text theme has no sizes yet (Theme.of adds
+  // them later), so a factor trips an assert in debug builds (red screen for
+  // the whole app) and does nothing in release. Sizes are set per widget.
+  final tt = base.textTheme.apply(bodyColor: espresso, displayColor: espresso);
   return base.copyWith(
     textTheme: tt,
     // Every page paints the saffron glow itself (GlassPageTransitionsBuilder).

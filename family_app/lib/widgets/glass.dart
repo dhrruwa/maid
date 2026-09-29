@@ -129,7 +129,8 @@ class _RimPainter extends CustomPainter {
   bool shouldRepaint(_RimPainter old) => old.radius != radius;
 }
 
-/// Soft specular highlight across the top of a glass button.
+/// Soft specular highlight across the top of a glass button, painted behind
+/// [child] (the button's padding and label).
 class GlassHighlight extends StatelessWidget {
   const GlassHighlight({super.key, required this.radius, required this.child});
   final double radius;
@@ -137,8 +138,8 @@ class GlassHighlight extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(children: [
-      child,
+    // passthrough: the label keeps the button's own size and alignment.
+    return Stack(fit: StackFit.passthrough, children: [
       Positioned.fill(
         child: IgnorePointer(
           child: DecoratedBox(
@@ -154,6 +155,7 @@ class GlassHighlight extends StatelessWidget {
           ),
         ),
       ),
+      child,
     ]);
   }
 }
