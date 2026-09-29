@@ -195,6 +195,28 @@ Months that have been paid come back **frozen**: the saved snapshot, never recal
 
 **Returns:** `{ url, month, paid, total }`. `url` is a signed link to the PDF slip that is valid for 1 hour. Download it with `http`, then use `Printing.sharePdf` / `Printing.layoutPdf`. Slips of paid months never change.
 
+## get_timeline
+The last days as a timeline: scan times, missed visits (gaps), holidays and leave. Used for the "This week" timeline on Home and on the scan result screen.
+
+**Input:** `{ device_id, from: "YYYY-MM-DD", to: "YYYY-MM-DD" }` (at most 31 days, and may span two months)
+
+**Returns:**
+```json
+{
+  "from": "2026-09-23", "to": "2026-09-29", "today": "2026-09-29", "now": "2026-09-29T04:10:00.000Z",
+  "windows": { "morning_start": "06:00:00", "morning_end": "12:00:00", "evening_start": "15:00:00", "evening_end": "21:00:00" },
+  "done": 9, "missed": 2,
+  "days": [ {
+    "date": "2026-09-29", "dow": 2, "status": "yellow", "amount": 100,
+    "slots": {
+      "morning": { "state": "done", "amount": 100, "scanned_at": "2026-09-29T02:12:00Z", "is_offline": false, "is_manual": false },
+      "evening": { "state": "pending", "amount": 0, "scanned_at": null, "is_offline": false, "is_manual": false }
+    }
+  } ]
+}
+```
+`state` takes the same values as in `get_month_summary`.
+
 ## update_device
 Send this when the FCM token refreshes or she switches language.
 
