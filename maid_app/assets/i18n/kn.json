@@ -45,6 +45,8 @@
   "what_to_cook": "ಏನು ಅಡುಗೆ ಮಾಡಬೇಕು",
   "no_menu": "ಮೆನು ಇಲ್ಲ – ದಯವಿಟ್ಟು ಮಾಲೀಕರನ್ನು ಕೇಳಿ",
   "no_cooking": "ಅಡುಗೆ ಅಗತ್ಯವಿಲ್ಲ",
+  "cook_for": "{count} ಜನರಿಗೆ ಅಡುಗೆ",
+  "no_bookings": "ಇನ್ನೂ ಯಾರೂ ಬುಕ್ ಮಾಡಿಲ್ಲ",
   "open_youtube": "YouTube ನಲ್ಲಿ ತೆರೆಯಿರಿ",
   "request_leave": "ರಜೆ ಕೇಳಿ",
   "my_history": "ನನ್ನ ಇತಿಹಾಸ",

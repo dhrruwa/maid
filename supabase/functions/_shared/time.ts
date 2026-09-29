@@ -61,9 +61,11 @@ export function nextMonth(month: string): string {
   return d.toISOString().slice(0, 7);
 }
 
+/** A real calendar date as YYYY-MM-DD ("2026-09-31" is rejected, not rolled over to 1 Oct). */
 export function isValidDate(s: unknown): s is string {
-  return typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s) &&
-    !isNaN(Date.parse(s + "T00:00:00Z"));
+  if (typeof s !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  const t = Date.parse(s + "T00:00:00Z");
+  return !isNaN(t) && new Date(t).toISOString().slice(0, 10) === s;
 }
 
 export function isValidMonth(s: unknown): s is string {

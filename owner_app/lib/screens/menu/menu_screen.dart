@@ -8,6 +8,7 @@ import '../../core/theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/motion.dart';
 import '../../widgets/video.dart';
+import 'bookings.dart';
 import 'copy_menu_sheet.dart';
 import 'dish_sheet.dart';
 import 'dishes_screen.dart';
@@ -82,6 +83,15 @@ class _MenuScreenState extends State<MenuScreen> {
 
   Map? get _off => _menu?[_slot]?['off'] as Map?;
 
+  /// Family bookings of [slot] on the shown day (null in a reply without them).
+  Bookings? _bookings(String slot) => _menuDate == ymd(_date) ? Bookings.of(_menu?[slot]) : null;
+
+  /// "Morning · 4" when people booked that meal.
+  String _segment(String label, String slot) {
+    final n = _bookings(slot)?.count ?? 0;
+    return n > 0 ? '$label · $n' : label;
+  }
+
   Future<void> _save(List<Map<String, dynamic>> items, {String? success}) async {
     // The list on screen is still another day's: never write it to this day.
     if (_menuDate != ymd(_date)) return;
@@ -123,6 +133,7 @@ class _MenuScreenState extends State<MenuScreen> {
     final today = istToday();
     final days = List.generate(21, (i) => today.add(Duration(days: i - 3)));
     final off = _off;
+    final bookings = _bookings(_slot);
 
     return Column(children: [
       SizedBox(
@@ -192,9 +203,11 @@ class _MenuScreenState extends State<MenuScreen> {
         child: SizedBox(
           width: double.infinity,
           child: SegmentedButton<String>(
-            segments: const [
-              ButtonSegment(value: 'morning', label: Text('Morning'), icon: Icon(Icons.wb_sunny_outlined)),
-              ButtonSegment(value: 'evening', label: Text('Evening'), icon: Icon(Icons.nights_stay_outlined)),
+            segments: [
+              ButtonSegment(
+                  value: 'morning', label: Text(_segment('Morning', 'morning')), icon: const Icon(Icons.wb_sunny_outlined)),
+              ButtonSegment(
+                  value: 'evening', label: Text(_segment('Evening', 'evening')), icon: const Icon(Icons.nights_stay_outlined)),
             ],
             selected: {_slot},
             onSelectionChanged: (s) => setState(() => _slot = s.first),
@@ -230,6 +243,19 @@ class _MenuScreenState extends State<MenuScreen> {
                         onRemove: () => _remove(i),
                         onNotes: () => _editNotes(i),
                       )),
+                    ),
+                  // Who is eating (Family app). Hidden on an off meal unless
+                  // someone booked it before it was turned off.
+                  if (bookings != null && (off == null || bookings.count > 0))
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: EntryAnimation(
+                        index: _items.length,
+                        child: BookingsRow(
+                          bookings: bookings,
+                          title: '${slotLabel(_slot)} · ${longDate(ymd(_date))}',
+                        ),
+                      ),
                     ),
                   if (off == null)
                     FilledButton.icon(onPressed: _add, icon: const Icon(Icons.add), label: const Text('Add dish')),

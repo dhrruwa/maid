@@ -32,25 +32,40 @@ export async function offSlots(
   houseId: string,
   date: string,
 ): Promise<Record<Slot, OffInfo | null>> {
+  return (await offSlotsRange(sb, houseId, date, date)).get(date)!;
+}
+
+/** offSlots for every date from..to (inclusive) in two queries. */
+export async function offSlotsRange(
+  sb: SupabaseClient,
+  houseId: string,
+  from: string,
+  to: string,
+): Promise<Map<string, Record<Slot, OffInfo | null>>> {
   const [hol, lv] = await Promise.all([
-    sb.from("holidays").select("slot,paid,note").eq("house_id", houseId).eq("date", date)
-      .is("deleted_at", null),
-    sb.from("leave_requests").select("slot,status,reason").eq("house_id", houseId).eq("date", date)
+    sb.from("holidays").select("date,slot,paid,note").eq("house_id", houseId)
+      .gte("date", from).lte("date", to).is("deleted_at", null),
+    sb.from("leave_requests").select("date,slot,status,reason").eq("house_id", houseId)
+      .gte("date", from).lte("date", to)
       .in("status", ["approved_paid", "approved_unpaid"]).is("deleted_at", null),
   ]);
-  const holidays = must(hol) as { slot: string; paid: boolean; note: string | null }[];
-  const leaves = must(lv) as { slot: string; status: string; reason: string | null }[];
-  const out = {} as Record<Slot, OffInfo | null>;
-  for (const slot of ["morning", "evening"] as Slot[]) {
-    const h = holidays.find((x) => x.slot === "full" || x.slot === slot);
-    const l = leaves.find((x) => x.slot === "full" || x.slot === slot);
-    out[slot] = h
-      ? { type: "holiday", paid: h.paid, note: h.note }
-      : l
-      ? { type: "leave", paid: l.status === "approved_paid", note: l.reason }
-      : !slotExpected(date, slot)
-      ? { type: "not_needed", paid: false, note: null }
-      : null;
+  const holidays = must(hol) as { date: string; slot: string; paid: boolean; note: string | null }[];
+  const leaves = must(lv) as { date: string; slot: string; status: string; reason: string | null }[];
+  const out = new Map<string, Record<Slot, OffInfo | null>>();
+  for (let date = from; date <= to; date = addDays(date, 1)) {
+    const day = {} as Record<Slot, OffInfo | null>;
+    for (const slot of ["morning", "evening"] as Slot[]) {
+      const h = holidays.find((x) => x.date === date && (x.slot === "full" || x.slot === slot));
+      const l = leaves.find((x) => x.date === date && (x.slot === "full" || x.slot === slot));
+      day[slot] = h
+        ? { type: "holiday", paid: h.paid, note: h.note }
+        : l
+        ? { type: "leave", paid: l.status === "approved_paid", note: l.reason }
+        : !slotExpected(date, slot)
+        ? { type: "not_needed", paid: false, note: null }
+        : null;
+    }
+    out.set(date, day);
   }
   return out;
 }

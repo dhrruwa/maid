@@ -1,7 +1,7 @@
 import { createClient, SupabaseClient } from "jsr:@supabase/supabase-js@2";
 import { AppError } from "./http.ts";
 
-export type Actor = "owner" | "maid" | "system";
+export type Actor = "owner" | "maid" | "member" | "system";
 
 /**
  * Service-role client. The `x-actor` header is read by the activity_log

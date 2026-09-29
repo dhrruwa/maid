@@ -11,6 +11,7 @@ import '../../widgets/week_timeline.dart';
 import '../history/history_screen.dart';
 import '../holidays/holidays_screen.dart';
 import '../leave/leave_screen.dart';
+import '../menu/bookings.dart';
 import '../qr_views.dart';
 import '../shell.dart';
 
@@ -31,6 +32,10 @@ class _HomeScreenState extends State<HomeScreen> {
   /// [_d] came from the server in this session (not only the saved copy), so
   /// the salary due can be acted on.
   bool _fresh = false;
+
+  /// Today's `get_menu` (the same saved copy as the Menu tab's): the dashboard
+  /// has no family bookings, so the preview's counts come from here.
+  Map<String, dynamic>? _todayMenu = Api.cached('get_menu', body: {'date': ymd(istToday())});
 
   /// When the other tabs' data was last fetched ahead of time.
   static DateTime? _prefetchedAt;
@@ -54,6 +59,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _load() async {
     _seenVersion = AppState.i.version;
+    _loadTodayMenu();
     try {
       final d = await Api.read('get_dashboard');
       if (mounted) setState(() {
@@ -65,6 +71,16 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (e) {
       if (mounted) setState(() => _error = e);
     }
+  }
+
+  /// Refreshes today's bookings for the menu preview. A failure keeps the
+  /// saved counts (the preview works without them).
+  Future<void> _loadTodayMenu() async {
+    final date = ymd(istToday());
+    try {
+      final r = await Api.read('get_menu', body: {'date': date});
+      if (mounted) setState(() => _todayMenu = r);
+    } catch (_) {}
   }
 
   /// Fetches what the other tabs show first, in the background, so they open
@@ -132,7 +148,8 @@ class _HomeScreenState extends State<HomeScreen> {
       _SalaryCard(s: s),
       if (today != null) _TodayCard(today: today, cookName: cook?['name']),
       const WeekTimeline(),
-      if (today != null) _MenuPreview(today: today),
+      if (today != null)
+        _MenuPreview(today: today, menu: _todayMenu?['date'] == today['date'] ? _todayMenu : null),
       _CountsCard(counts: Map<String, dynamic>.from(s['counts'])),
       if (pending.isNotEmpty)
         SectionCard(
@@ -341,31 +358,60 @@ class _TodayCard extends StatelessWidget {
 }
 
 class _MenuPreview extends StatelessWidget {
-  const _MenuPreview({required this.today});
+  const _MenuPreview({required this.today, this.menu});
   final Map today;
+
+  /// Today's `get_menu` reply, for the number of people eating (null until loaded).
+  final Map<String, dynamic>? menu;
 
   @override
   Widget build(BuildContext context) {
-    final menu = today['menu'] as Map;
+    final dishes = today['menu'] as Map;
     String names(List l) => l.isEmpty ? 'Not set' : l.map((e) => e['name']).join(', ');
     return SectionCard(
       title: "Today's menu",
       trailing: const Icon(Icons.chevron_right),
       onTap: () => Shell.goTo(context, 2),
       child: Column(children: [
-        _row(Icons.wb_sunny_outlined, 'Morning', names(menu['morning'] as List)),
+        _row(context, Icons.wb_sunny_outlined, 'Morning', names(dishes['morning'] as List), Bookings.of(menu?['morning'])),
         const SizedBox(height: 8),
-        _row(Icons.nights_stay_outlined, 'Evening', names(menu['evening'] as List)),
+        _row(context, Icons.nights_stay_outlined, 'Evening', names(dishes['evening'] as List), Bookings.of(menu?['evening'])),
       ]),
     );
   }
 
-  Widget _row(IconData i, String label, String v) => Row(children: [
+  Widget _row(BuildContext context, IconData i, String label, String v, Bookings? b) => Row(children: [
         Icon(i, size: 20),
         const SizedBox(width: 8),
         SizedBox(width: 70, child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600))),
         Expanded(child: Text(v, maxLines: 2, overflow: TextOverflow.ellipsis)),
+        if (b != null) ...[const SizedBox(width: 8), _EatingCount(b.count)],
       ]);
+}
+
+/// Small pill: people icon + how many booked the meal.
+class _EatingCount extends StatelessWidget {
+  const _EatingCount(this.count);
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = count > 0 ? accent : StatusColors.future;
+    final text = count > 0 ? Theme.of(context).colorScheme.primary : StatusColors.future;
+    return Semantics(
+      label: count == 1 ? '1 person eating' : '$count people eating',
+      excludeSemantics: true,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(Icons.people_alt_rounded, size: 14, color: color),
+          const SizedBox(width: 4),
+          Text('$count', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: text)),
+        ]),
+      ),
+    );
+  }
 }
 
 class _CountsCard extends StatelessWidget {

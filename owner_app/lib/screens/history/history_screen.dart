@@ -46,6 +46,7 @@ const _types = {
   'leave': ('Leave', Icons.event_busy_rounded),
   'holiday': ('Holiday', Icons.beach_access_rounded),
   'payment': ('Payment', Icons.payments_rounded),
+  'bookings': ('Bookings', Icons.groups_rounded),
   'settings': ('Settings', Icons.settings_rounded),
 };
 
@@ -56,8 +57,25 @@ IconData _iconFor(String entity) => switch (entity) {
       'holidays' => Icons.beach_access_rounded,
       'payments' || 'monthly_snapshots' => Icons.payments_rounded,
       'cook_device' || 'pairing_tokens' => Icons.phonelink_ring_rounded,
+      'meal_bookings' => Icons.restaurant_rounded,
+      'members' => Icons.groups_rounded,
       _ => Icons.settings_rounded,
     };
+
+/// Who did it, for the event sheet ("by Owner", "by Family member").
+String _actorLabel(String actor) => switch (actor) {
+      'owner' => 'Owner',
+      'maid' => 'Maid',
+      'member' => 'Family member',
+      _ => 'System',
+    };
+
+/// Who did it: the server's `actor_name` (a family member's own name for
+/// actor 'member'), else the generic label (replies saved before it existed).
+String _actorOf(Map e) {
+  final n = e['actor_name'];
+  return n is String && n.trim().isNotEmpty ? n.trim() : _actorLabel('${e['actor']}');
+}
 
 /// Body of the Activity tab's first page with no filters: saved on the phone
 /// and fetched ahead of time from Home.
@@ -280,7 +298,12 @@ class _EventTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final actor = '${e['actor']}';
-    final color = actor == 'maid' ? StatusColors.done : actor == 'owner' ? accent : StatusColors.future;
+    final color = switch (actor) {
+      'maid' => StatusColors.done,
+      'owner' => accent,
+      'member' => StatusColors.holiday,
+      _ => StatusColors.future,
+    };
     final deleted = e['action'] == 'delete';
     return InkWell(
       borderRadius: BorderRadius.circular(12),
@@ -314,7 +337,7 @@ class _EventTile extends StatelessWidget {
 void _showEvent(BuildContext context, Map<String, dynamic> e, VoidCallback onChanged) {
   final oldV = Map<String, dynamic>.from(e['old_value'] ?? {});
   final newV = Map<String, dynamic>.from(e['new_value'] ?? {});
-  const hidden = {'id', 'house_id', 'created_at', 'updated_at', 'device_id'};
+  const hidden = {'id', 'house_id', 'created_at', 'updated_at', 'device_id', 'pin_hash', 'fcm_token', 'member_id'};
   final keys = {...oldV.keys, ...newV.keys}.where((k) => !hidden.contains(k)).toList();
 
   showModalBottomSheet(
@@ -326,7 +349,8 @@ void _showEvent(BuildContext context, Map<String, dynamic> e, VoidCallback onCha
       initialChildSize: 0.6,
       builder: (c, scroll) => ListView(controller: scroll, padding: const EdgeInsets.fromLTRB(20, 0, 20, 24), children: [
         Text('${e['text']}', style: Theme.of(c).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-        Text('${istDateTime(e['created_at'])} · by ${e['actor']}', style: Theme.of(c).textTheme.bodySmall),
+        Text('${istDateTime(e['created_at'])} · by ${_actorOf(e)}',
+            style: Theme.of(c).textTheme.bodySmall),
         const SizedBox(height: 16),
         Table(
           columnWidths: const {0: FlexColumnWidth(1.1), 1: FlexColumnWidth(1), 2: FlexColumnWidth(1)},

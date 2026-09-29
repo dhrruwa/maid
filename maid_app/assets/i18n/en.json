@@ -45,6 +45,8 @@
   "what_to_cook": "What to cook",
   "no_menu": "No menu set – please ask the owner",
   "no_cooking": "No cooking needed",
+  "cook_for": "Cook for {count}",
+  "no_bookings": "No one has booked yet",
   "open_youtube": "Open in YouTube",
   "request_leave": "Request leave",
   "my_history": "My history",

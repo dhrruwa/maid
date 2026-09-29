@@ -70,6 +70,10 @@ class Api {
           )
           .timeout(_timeout);
       return _unwrap(jsonDecode(utf8.decode(res.bodyBytes)));
+    } on FunctionsFetchException {
+      // Never reached the server (offline, DNS, TLS...): a network error, not a
+      // bad reply. It is a FunctionException too, so it must be caught first.
+      throw ApiError('NETWORK', '');
     } on FunctionException catch (e) {
       return _unwrap(e.details);
     } on ApiError {

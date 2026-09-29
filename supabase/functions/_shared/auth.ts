@@ -41,12 +41,28 @@ export interface CookDevice {
   active: boolean;
 }
 
+/** A family member (Family app). pin_hash is never loaded into a context. */
+export interface Member {
+  id: string;
+  house_id: string;
+  name: string;
+  device_id: string | null;
+  fcm_token: string | null;
+  linked_at: string | null;
+  active: boolean;
+  created_at: string;
+}
+
+/** Member columns that are safe to load (everything but pin_hash / lockout counters). */
+export const MEMBER_COLS = "id,house_id,name,device_id,fcm_token,linked_at,active,created_at";
+
 export interface Ctx {
-  role: "owner" | "maid";
+  role: "owner" | "maid" | "member";
   sb: SupabaseClient;
   house: House;
   settings: Settings;
-  cook: CookDevice | null; // the active maid phone (for the owner too, if paired)
+  cook: CookDevice | null; // the active maid phone (for the owner and members too, if paired)
+  member?: Member | null; // the logged-in family member (role "member" only)
 }
 
 function deviceId(body: Body): string {
@@ -137,6 +153,63 @@ export async function anyCtx(body: Body): Promise<Ctx> {
   if (!(e instanceof AppError && e.code === "NOT_OWNER")) throw e;
   if (maid.status === "fulfilled") return maid.value;
   throw maid.reason;
+}
+
+/**
+ * Family app phone. One round trip: the active member bound to this device
+ * with the house, its settings and the newest active maid phone embedded.
+ */
+export async function memberCtx(body: Body): Promise<Ctx> {
+  const id = deviceId(body);
+  const sb = db("member");
+  const row = must(
+    await sb.from("members").select(`${MEMBER_COLS}, house(*, settings(*), cook_device(*))`)
+      .eq("device_id", id).eq("active", true)
+      .eq("house.cook_device.active", true)
+      .order("paired_at", { ascending: false, referencedTable: "house.cook_device" })
+      .limit(1, { referencedTable: "house.cook_device" })
+      .limit(1).maybeSingle(),
+  ) as Row | null;
+  if (!row) {
+    throw new AppError("NOT_MEMBER", "This phone is not logged in as a family member", {}, 401);
+  }
+  const { house: houseRow, ...member } = row;
+  const h = one<Row>(houseRow);
+  if (!h) throw new Error("JSON object requested, multiple (or no) rows returned");
+  const { settings, cook_device, ...house } = h;
+  return {
+    role: "member",
+    sb,
+    house: house as House,
+    settings: requireSettings(settings),
+    cook: one<CookDevice>(cook_device),
+    member: member as Member,
+  };
+}
+
+const isAuthMiss = (r: PromiseSettledResult<Ctx>, code: string) =>
+  r.status === "rejected" && r.reason instanceof AppError && r.reason.code === code;
+
+/**
+ * Anyone who may read the menu: the owner phone, the paired maid phone or a
+ * logged-in family member. All three lookups run in parallel; owner wins,
+ * then maid, then member. When none matches, the maid's NOT_PAIRED error is
+ * thrown (what the maid and owner apps already handle).
+ */
+export async function readerCtx(body: Body): Promise<Ctx> {
+  deviceId(body);
+  const [owner, maid, member] = await Promise.allSettled([
+    ownerCtx(body),
+    maidCtx(body),
+    memberCtx(body),
+  ]);
+  if (owner.status === "fulfilled") return owner.value;
+  if (!isAuthMiss(owner, "NOT_OWNER")) throw (owner as PromiseRejectedResult).reason;
+  if (maid.status === "fulfilled") return maid.value;
+  if (!isAuthMiss(maid, "NOT_PAIRED")) throw (maid as PromiseRejectedResult).reason;
+  if (member.status === "fulfilled") return member.value;
+  if (!isAuthMiss(member, "NOT_MEMBER")) throw (member as PromiseRejectedResult).reason;
+  throw (maid as PromiseRejectedResult).reason;
 }
 
 export function actorOf(ctx: Ctx): Actor {

@@ -582,7 +582,89 @@ class _SlotMenu extends StatelessWidget {
           Text(L.slot(slot), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
         ]),
         const SizedBox(height: 10),
+        // Who is eating. Nothing when the slot is off, or for a saved response
+        // from before bookings existed (no "bookings" key).
+        if (off == null && data?['bookings'] is Map) ...[
+          _Bookings(bookings: data!['bookings'] as Map),
+          const SizedBox(height: 14),
+        ],
         body,
+      ]),
+    );
+  }
+}
+
+/// "Cook for 4" + each name (and note, e.g. "Rahul – no onion"), from
+/// get_menu's bookings {count, people:[{name, note}]}.
+class _Bookings extends StatelessWidget {
+  const _Bookings({required this.bookings});
+  final Map bookings;
+
+  @override
+  Widget build(BuildContext context) {
+    final people = [
+      for (final p in (bookings['people'] is List ? bookings['people'] as List : const []))
+        if (p is Map && '${p['name'] ?? ''}'.trim().isNotEmpty) p,
+    ];
+    // Never throw on an odd value (a cast error here would blank the card).
+    final c = bookings['count'];
+    final count = c is num ? c.toInt() : int.tryParse('${c ?? ''}') ?? people.length;
+
+    if (count <= 0) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: StatusColors.grey.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(children: [
+          const Icon(Icons.person_off_rounded, size: 28, color: StatusColors.grey),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(L.t('no_bookings'),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: espresso.withValues(alpha: 0.75))),
+          ),
+        ]),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+      decoration: BoxDecoration(
+        color: tint.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: saffronRim.withValues(alpha: 0.35)),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Row(children: [
+          const Icon(Icons.groups_rounded, size: 34, color: saffronRim),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(L.t('cook_for', {'count': count}),
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, height: 1.15)),
+          ),
+        ]),
+        for (final p in people)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const Padding(
+                padding: EdgeInsets.only(left: 4, top: 1),
+                child: Icon(Icons.person_rounded, size: 22, color: saffronRim),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text.rich(
+                  TextSpan(children: [
+                    TextSpan(text: '${p['name']}'.trim(), style: const TextStyle(fontWeight: FontWeight.w800)),
+                    if (p['note'] != null && '${p['note']}'.trim().isNotEmpty)
+                      TextSpan(text: ' – ${'${p['note']}'.trim()}'),
+                  ]),
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                ),
+              ),
+            ]),
+          ),
       ]),
     );
   }

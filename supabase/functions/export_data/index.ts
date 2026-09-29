@@ -13,10 +13,21 @@ const TABLES: [string, string][] = [
   ["payments", "month"],
   ["monthly_snapshots", "month"],
   ["cook_device", "paired_at"],
+  ["members", "created_at"],
+  ["meal_bookings", "date"],
   ["activity_log", "id"],
 ];
 
-const SECRET = ["fcm_token", "device_id", "owner_device_id", "owner_fcm_token", "qr_token", "owner_pin_hash", "recovery_key_hash"];
+const SECRET = [
+  "fcm_token",
+  "device_id",
+  "owner_device_id",
+  "owner_fcm_token",
+  "qr_token",
+  "owner_pin_hash",
+  "recovery_key_hash",
+  "pin_hash",
+];
 
 // deno-lint-ignore no-explicit-any
 function strip(row: Record<string, any>) {

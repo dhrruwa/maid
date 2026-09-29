@@ -107,3 +107,15 @@ verify_jwt = false
 
 [functions.get_timeline]
 verify_jwt = false
+
+[functions.manage_members]
+verify_jwt = false
+
+[functions.member_login]
+verify_jwt = false
+
+[functions.member_home]
+verify_jwt = false
+
+[functions.book_meal]
+verify_jwt = false

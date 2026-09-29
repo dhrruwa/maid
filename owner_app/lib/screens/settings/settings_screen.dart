@@ -9,6 +9,7 @@ import '../../core/format.dart';
 import '../../core/theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/pin_pad.dart';
+import '../family/members_screen.dart';
 import '../qr_views.dart';
 import '../setup/setup_flow.dart';
 
@@ -28,6 +29,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.initState();
     st.addListener(_rebuild);
     st.refresh().catchError((_) {});
+    _loadMembers();
+  }
+
+  /// Refreshes the saved members list behind the "Family members" summary.
+  Future<void> _loadMembers() async {
+    try {
+      await Api.read('manage_members', body: membersListBody);
+      _rebuild();
+    } catch (_) {}
   }
 
   @override
@@ -142,6 +152,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  /// "3 people · 2 phones linked", from the saved members list.
+  String _membersLine() {
+    final m = parseMembers(Api.cached('manage_members', body: membersListBody));
+    if (m == null) return 'Who can book meals in the Family app';
+    if (m.isEmpty) return 'Add the people who eat at home';
+    final linked = m.where((e) => e['linked'] == true).length;
+    return '${m.length} ${m.length == 1 ? 'person' : 'people'} · $linked ${linked == 1 ? 'phone' : 'phones'} linked';
+  }
+
   @override
   Widget build(BuildContext context) {
     final h = st.house;
@@ -183,6 +202,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: const Text('Allowed distance'),
             subtitle: Text('${h['radius_m'] ?? 100} m'),
             onTap: _radius,
+          ),
+        ]),
+        _Group('Family members', [
+          ListTile(
+            leading: const Icon(Icons.groups_rounded),
+            title: const Text('Family members'),
+            subtitle: Text(_membersLine()),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () async {
+              await Navigator.push(context, MaterialPageRoute(builder: (_) => const MembersScreen()));
+              // Show the new count (a reload after a change may still be on its way).
+              _rebuild();
+              await _loadMembers();
+            },
+          ),
+          Builder(
+            builder: (b) => ListTile(
+              leading: const Icon(Icons.share_rounded),
+              title: const Text('Share Family app login steps'),
+              subtitle: const Text('Name + last 4 digits of their phone number'),
+              onTap: () => shareFamilyInvite(b),
+            ),
           ),
         ]),
         _Group('Pay rates', [

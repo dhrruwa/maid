@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFBE94"/><stop offset="0.5" stop-color="#F7935A"/><stop offset="1" stop-color="#E2672A"/></linearGradient>
+  <radialGradient id="glow" cx="0.5" cy="0.55" r="0.5"><stop offset="0" stop-color="#FFF0DE" stop-opacity="0.45"/><stop offset="1" stop-color="#FFF0DE" stop-opacity="0"/></radialGradient>
+  <radialGradient id="sheen" cx="0.18" cy="0.08" r="0.85"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.42"/><stop offset="0.55" stop-color="#FFFFFF" stop-opacity="0"/></radialGradient>
+  <linearGradient id="plate" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#FFE9D4"/></linearGradient>
+  <linearGradient id="well" x1="0.8" y1="1" x2="0.2" y2="0"><stop offset="0" stop-color="#FFFDFB"/><stop offset="1" stop-color="#FBE3CC"/></linearGradient>
+  <linearGradient id="cutlery" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#FFE7D1"/></linearGradient>
+  <linearGradient id="heart" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0" stop-color="#FBB56F"/><stop offset="1" stop-color="#DE6216"/></linearGradient>
+  <filter id="drop" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#7A2A06" flood-opacity="0.40"/></filter>
+  <filter id="soft" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#8A3A0A" flood-opacity="0.30"/></filter>
+</defs>
+<rect width="1024" height="1024" fill="url(#bg)"/><rect width="1024" height="1024" fill="url(#glow)"/><rect width="1024" height="1024" fill="url(#sheen)"/><g transform="translate(512 512) scale(0.8982) translate(-512 -512)">
+<g filter="url(#drop)">
+  <path d="M248 347 A9 9 0 0 1 266 347 L266 434 L248 434 Z M275 347 A9 9 0 0 1 293 347 L293 434 L275 434 Z M302 347 A9 9 0 0 1 320 347 L320 434 L302 434 Z M248 426 L320 426 L320 442 C320 478 301.5 492 297.5 514 L270.5 514 C266.5 492 248 478 248 442 Z M270.5 504 L297.5 504 L300.5 674.5 A16.5 16.5 0 0 1 267.5 674.5 Z" fill="url(#cutlery)"/>
+  <path d="M740 338 C794 338 788 458 740 458 C692 458 686 338 740 338 Z M728 448 L752 448 L753.5 518 L726.5 518 Z M726.5 508 L753.5 508 L756.5 674.5 A16.5 16.5 0 0 1 723.5 674.5 Z" fill="url(#cutlery)"/>
+  <circle cx="512" cy="512" r="200" fill="url(#plate)"/>
+</g>
+<!-- glassy rim + well -->
+<circle cx="512" cy="512" r="198" fill="none" stroke="#FFFFFF" stroke-opacity="0.9" stroke-width="4"/>
+<circle cx="512" cy="512" r="142" fill="url(#well)"/>
+<circle cx="512" cy="512" r="142" fill="none" stroke="#EBBE97" stroke-width="7"/>
+<path d="M362 442 A176 176 0 0 1 472 354" fill="none" stroke="#FFFFFF" stroke-opacity="0.95" stroke-width="12" stroke-linecap="round"/>
+<!-- heart -->
+<g filter="url(#soft)"><path d="M512.0 596.6 C494.6 582.6 425.0 535.7 425.0 490.4 C425.0 457.4 449.4 436.5 473.7 436.5 C494.6 436.5 506.8 448.7 512.0 462.6 C517.2 448.7 529.4 436.5 550.3 436.5 C574.6 436.5 599.0 457.4 599.0 490.4 C599.0 535.7 529.4 582.6 512.0 596.6 Z" fill="url(#heart)"/></g>
+<path d="M454 472 C452 454 466 442 482 444" fill="none" stroke="#FFFFFF" stroke-opacity="0.55" stroke-width="10" stroke-linecap="round"/>
+<!-- cutlery sheen -->
+<path d="M278 530 L278 648" stroke="#FFFFFF" stroke-opacity="0.8" stroke-width="6" stroke-linecap="round"/>
+<path d="M718 372 C710 394 710 418 718 438" fill="none" stroke="#FFFFFF" stroke-opacity="0.8" stroke-width="8" stroke-linecap="round"/>
+<path d="M734 548 L734 648" stroke="#FFFFFF" stroke-opacity="0.8" stroke-width="6" stroke-linecap="round"/>
+</g>
+</svg>
