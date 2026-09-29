@@ -19,7 +19,8 @@ class LangButton extends StatelessWidget {
           minimumSize: const Size(48, 44),
           padding: const EdgeInsets.symmetric(horizontal: 14),
           side: const BorderSide(color: accent, width: 1.5),
-          foregroundColor: accent,
+          foregroundColor: brand,
+          iconColor: accent,
         ),
         onPressed: () async {
           await L.setLang(L.isKannada ? 'en' : 'kn');
@@ -43,6 +44,7 @@ class BigButton extends StatelessWidget {
     this.height = 64,
     this.filled = true,
     this.color,
+    this.iconColor,
   });
   final IconData icon;
   final String label;
@@ -50,11 +52,12 @@ class BigButton extends StatelessWidget {
   final double height;
   final bool filled;
   final Color? color;
+  final Color? iconColor;
 
   @override
   Widget build(BuildContext context) {
     final child = Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-      Icon(icon, size: height > 70 ? 34 : 26),
+      Icon(icon, size: height > 70 ? 34 : 26, color: iconColor),
       const SizedBox(width: 12),
       Flexible(child: Text(label, textAlign: TextAlign.center)),
     ]);

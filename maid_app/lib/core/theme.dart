@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-const accent = Color(0xFFE8731F); // warm orange, same as the owner app
+// Palette "Espresso & Saffron", same as the owner app (see docs/COLOR_PALETTE.md):
+// espresso for buttons and text, saffron only for icons, borders and tints.
+const brand = Color(0xFF3A2A22); // espresso
+const accent = Color(0xFFE8731F); // saffron
+const appBackground = Color(0xFFFBF6F0);
 
 class StatusColors {
   static const done = Color(0xFF2E9E5B);
@@ -14,14 +18,20 @@ class StatusColors {
 
 /// Big text and big touch targets for a simple, easy app. Light mode.
 ThemeData buildTheme() {
-  final scheme = ColorScheme.fromSeed(seedColor: accent, brightness: Brightness.light);
+  final scheme = ColorScheme.fromSeed(seedColor: accent, brightness: Brightness.light).copyWith(
+    primary: brand,
+    onPrimary: Colors.white,
+    secondaryContainer: const Color(0xFFFCE3CF),
+    onSecondaryContainer: brand,
+    surface: appBackground,
+  );
   final base = ThemeData(useMaterial3: true, colorScheme: scheme);
   final tt = base.textTheme.apply(fontSizeFactor: 1.12);
   return base.copyWith(
     textTheme: tt,
-    scaffoldBackgroundColor: const Color(0xFFFBF7F3),
+    scaffoldBackgroundColor: appBackground,
     appBarTheme: AppBarTheme(
-      backgroundColor: const Color(0xFFFBF7F3),
+      backgroundColor: appBackground,
       surfaceTintColor: Colors.transparent,
       titleTextStyle: tt.titleLarge?.copyWith(fontWeight: FontWeight.w800, color: Colors.black87),
     ),

@@ -71,7 +71,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4),
           child: Material(
-            color: sel ? accent : Colors.white,
+            color: sel ? brand : Colors.white,
             borderRadius: BorderRadius.circular(18),
             child: InkWell(
               borderRadius: BorderRadius.circular(18),

@@ -191,6 +191,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   icon: Icons.qr_code_scanner_rounded,
                   label: L.t('scan_qr'),
                   height: 92,
+                  iconColor: accent,
                   onPressed: () => startScan(context),
                 ),
                 const SizedBox(height: 16),
@@ -547,7 +548,7 @@ class _SlotMenu extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFFBF7F3),
+        color: appBackground,
         borderRadius: BorderRadius.circular(18),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
