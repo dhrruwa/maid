@@ -104,3 +104,6 @@ verify_jwt = false
 
 [functions.update_settings]
 verify_jwt = false
+
+[functions.get_timeline]
+verify_jwt = false

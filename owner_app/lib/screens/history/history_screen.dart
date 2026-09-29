@@ -6,6 +6,7 @@ import '../../core/export.dart';
 import '../../core/format.dart';
 import '../../core/theme.dart';
 import '../../widgets/common.dart';
+import '../../widgets/motion.dart';
 import '../leave/leave_screen.dart';
 import 'slip_screen.dart';
 
@@ -211,7 +212,7 @@ class _ActivityTabState extends State<ActivityTab> with AutomaticKeepAliveClient
                         Padding(padding: EdgeInsets.all(48), child: Center(child: Text('Nothing here yet'))),
                       ])
                     : ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                        padding: EdgeInsets.fromLTRB(16, 4, 16, 24 + MediaQuery.paddingOf(context).bottom),
                         itemCount: _events.length + (_next != null ? 1 : 0),
                         itemBuilder: (c, i) {
                           if (i == _events.length) {
@@ -224,7 +225,7 @@ class _ActivityTabState extends State<ActivityTab> with AutomaticKeepAliveClient
                             );
                           }
                           final e = _events[i];
-                          return _EventTile(e: e, onChanged: () => AppState.i.changed());
+                          return EntryAnimation(index: i, child: _EventTile(e: e, onChanged: () => AppState.i.changed()));
                         },
                       ),
               ),
@@ -392,9 +393,9 @@ class _PaymentsTabState extends State<PaymentsTab> with AutomaticKeepAliveClient
     }
     return RefreshIndicator(
       onRefresh: _load,
-      child: ListView(padding: const EdgeInsets.all(16), children: [
-        for (final m in _months!)
-          Card(
+      child: ListView(padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.paddingOf(context).bottom), children: [
+        for (final (i, m) in _months!.indexed)
+          EntryAnimation(index: i, child: Card(
             margin: const EdgeInsets.only(bottom: 8),
             child: ListTile(
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -414,7 +415,7 @@ class _PaymentsTabState extends State<PaymentsTab> with AutomaticKeepAliveClient
                   style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SlipScreen(month: m['month']))),
             ),
-          ),
+          )),
         const SizedBox(height: 8),
         OutlinedButton.icon(
           onPressed: () => busy(context, exportAllData),
@@ -478,7 +479,7 @@ class _MenuHistoryTabState extends State<MenuHistoryTab> with AutomaticKeepAlive
     String names(List l) => l.isEmpty ? '—' : l.map((e) => e['name']).join(', ');
     return RefreshIndicator(
       onRefresh: _load,
-      child: ListView(padding: const EdgeInsets.all(16), children: [
+      child: ListView(padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.paddingOf(context).bottom), children: [
         if (top.isNotEmpty)
           SectionCard(
             title: 'Most cooked dishes',

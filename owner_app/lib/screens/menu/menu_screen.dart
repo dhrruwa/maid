@@ -6,6 +6,7 @@ import '../../core/app_state.dart';
 import '../../core/format.dart';
 import '../../core/theme.dart';
 import '../../widgets/common.dart';
+import '../../widgets/motion.dart';
 import '../../widgets/video.dart';
 import 'copy_menu_sheet.dart';
 import 'dish_sheet.dart';
@@ -176,7 +177,7 @@ class _MenuScreenState extends State<MenuScreen> {
             ? (_error != null ? ErrorRetry(error: _error!, onRetry: _load) : const SizedBox())
             : RefreshIndicator(
                 onRefresh: _load,
-                child: ListView(padding: const EdgeInsets.fromLTRB(16, 12, 16, 100), children: [
+                child: ListView(padding: EdgeInsets.fromLTRB(16, 12, 16, 24 + MediaQuery.paddingOf(context).bottom), children: [
                   if (off != null)
                     _OffBanner(off: off)
                   else if (_items.isEmpty)
@@ -190,12 +191,13 @@ class _MenuScreenState extends State<MenuScreen> {
                     ),
                   for (var i = 0; i < _items.length; i++)
                     Padding(
+                      key: ValueKey(_items[i]['menu_id']),
                       padding: const EdgeInsets.only(bottom: 10),
-                      child: _DishCard(
+                      child: EntryAnimation(index: i, child: _DishCard(
                         item: _items[i],
                         onRemove: () => _remove(i),
                         onNotes: () => _editNotes(i),
-                      ),
+                      )),
                     ),
                   if (off == null)
                     FilledButton.icon(onPressed: _add, icon: const Icon(Icons.add), label: const Text('Add dish')),

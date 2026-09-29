@@ -5,6 +5,9 @@ import '../../core/app_state.dart';
 import '../../core/format.dart';
 import '../../core/theme.dart';
 import '../../widgets/common.dart';
+import '../../widgets/glass.dart';
+import '../../widgets/motion.dart';
+import '../../widgets/week_timeline.dart';
 import '../holidays/holidays_screen.dart';
 import '../leave/leave_screen.dart';
 import '../qr_views.dart';
@@ -84,69 +87,69 @@ class _HomeScreenState extends State<HomeScreen> {
     final pending = (d['pending_leaves'] as List?) ?? [];
     final cook = d['cook'] as Map?;
 
+    final sections = <Widget>[
+      if (due != null) _DueBanner(due: due, onPaid: () => _markPaid(due)),
+      if (cook == null)
+        SectionCard(
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PairScreen())),
+          child: const Row(children: [
+            Icon(Icons.phonelink_ring_rounded, color: accent),
+            SizedBox(width: 12),
+            Expanded(child: Text('No maid phone paired yet. Tap to pair.')),
+            Icon(Icons.chevron_right),
+          ]),
+        ),
+      _SalaryCard(s: s),
+      if (today != null) _TodayCard(today: today, cookName: cook?['name']),
+      const WeekTimeline(),
+      if (today != null) _MenuPreview(today: today),
+      _CountsCard(counts: Map<String, dynamic>.from(s['counts'])),
+      if (pending.isNotEmpty)
+        SectionCard(
+          title: 'Leave requests (${pending.length})',
+          trailing: TextButton(
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LeaveScreen())),
+            child: const Text('See all'),
+          ),
+          child: Column(children: [
+            for (final l in pending) LeaveRequestTile(leave: Map<String, dynamic>.from(l), onDecide: _decide),
+          ]),
+        ),
+      Row(children: [
+        Expanded(
+          child: _QuickAction(
+            icon: Icons.beach_access_rounded,
+            label: 'Holidays',
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HolidaysScreen())),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _QuickAction(
+            icon: Icons.event_busy_rounded,
+            label: 'Leave',
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LeaveScreen())),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _QuickAction(
+            icon: Icons.qr_code_2_rounded,
+            label: 'House QR',
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HouseQrScreen())),
+          ),
+        ),
+      ]),
+    ];
+
     return RefreshIndicator(
       onRefresh: _load,
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-        children: [
-          if (due != null) ...[_DueBanner(due: due, onPaid: () => _markPaid(due)), const SizedBox(height: 12)],
-          if (cook == null) ...[
-            SectionCard(
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PairScreen())),
-              child: const Row(children: [
-                Icon(Icons.phonelink_ring_rounded, color: accent),
-                SizedBox(width: 12),
-                Expanded(child: Text('No maid phone paired yet. Tap to pair.')),
-                Icon(Icons.chevron_right),
-              ]),
-            ),
-            const SizedBox(height: 12),
-          ],
-          _SalaryCard(s: s),
-          const SizedBox(height: 12),
-          if (today != null) ...[_TodayCard(today: today, cookName: cook?['name']), const SizedBox(height: 12)],
-          if (today != null) ...[_MenuPreview(today: today), const SizedBox(height: 12)],
-          _CountsCard(counts: Map<String, dynamic>.from(s['counts'])),
-          const SizedBox(height: 12),
-          if (pending.isNotEmpty) ...[
-            SectionCard(
-              title: 'Leave requests (${pending.length})',
-              trailing: TextButton(
-                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LeaveScreen())),
-                child: const Text('See all'),
-              ),
-              child: Column(children: [
-                for (final l in pending) LeaveRequestTile(leave: Map<String, dynamic>.from(l), onDecide: _decide),
-              ]),
-            ),
-            const SizedBox(height: 12),
-          ],
-          Row(children: [
-            Expanded(
-              child: _QuickAction(
-                icon: Icons.beach_access_rounded,
-                label: 'Holidays',
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HolidaysScreen())),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _QuickAction(
-                icon: Icons.event_busy_rounded,
-                label: 'Leave',
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LeaveScreen())),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _QuickAction(
-                icon: Icons.qr_code_2_rounded,
-                label: 'House QR',
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HouseQrScreen())),
-              ),
-            ),
-          ]),
-        ],
+      child: ListView.separated(
+        // Bottom padding keeps the last card clear of the floating tab bar.
+        padding: EdgeInsets.fromLTRB(16, 4, 16, 24 + MediaQuery.paddingOf(context).bottom),
+        itemCount: sections.length,
+        separatorBuilder: (_, _) => const SizedBox(height: 12),
+        itemBuilder: (_, i) => EntryAnimation(index: i, child: sections[i]),
       ),
     );
   }
@@ -159,13 +162,9 @@ class _DueBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return Glass(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: accent.withValues(alpha: 0.4)),
-      ),
+      tintColor: accent.withValues(alpha: 0.14),
       child: Row(children: [
         const Icon(Icons.payments_rounded, color: accent, size: 32),
         const SizedBox(width: 12),

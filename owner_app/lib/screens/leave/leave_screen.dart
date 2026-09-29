@@ -136,7 +136,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
       final done = _leaves!.where((l) => l['status'] != 'pending').toList();
       body = RefreshIndicator(
         onRefresh: _load,
-        child: ListView(padding: const EdgeInsets.all(16), children: [
+        child: ListView(padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.paddingOf(context).bottom), children: [
           if (pending.isNotEmpty)
             SectionCard(
               title: 'Waiting for you',

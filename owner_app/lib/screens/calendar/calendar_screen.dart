@@ -109,7 +109,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         _months.remove(_month);
         await _load();
       },
-      child: ListView(padding: const EdgeInsets.fromLTRB(12, 0, 12, 24), children: [
+      child: ListView(padding: EdgeInsets.fromLTRB(12, 0, 12, 24 + MediaQuery.paddingOf(context).bottom), children: [
         Card(
           child: Padding(
             padding: const EdgeInsets.all(8),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../widgets/glass.dart';
+
 import 'calendar/calendar_screen.dart';
 import 'history/history_screen.dart';
 import 'home/home_screen.dart';
@@ -47,22 +49,24 @@ class _ShellState extends State<Shell> {
           ),
         ],
       ),
-      body: IndexedStack(
-        index: _tab,
-        children: [
-          for (var i = 0; i < pages.length; i++) _visited.contains(i) ? pages[i] : const SizedBox.shrink(),
-        ],
+      // Content scrolls under the frosted tab bar.
+      extendBody: true,
+      body: BackdropGroup(
+        child: IndexedStack(
+          index: _tab,
+          children: [
+            for (var i = 0; i < pages.length; i++) _visited.contains(i) ? pages[i] : const SizedBox.shrink(),
+          ],
+        ),
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _tab,
-        onDestinationSelected: setTab,
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home_rounded), label: 'Home'),
-          NavigationDestination(
-              icon: Icon(Icons.calendar_month_outlined), selectedIcon: Icon(Icons.calendar_month), label: 'Calendar'),
-          NavigationDestination(
-              icon: Icon(Icons.restaurant_menu_outlined), selectedIcon: Icon(Icons.restaurant_menu), label: 'Menu'),
-          NavigationDestination(icon: Icon(Icons.history_outlined), selectedIcon: Icon(Icons.history), label: 'History'),
+      bottomNavigationBar: GlassNavBar(
+        index: _tab,
+        onTap: setTab,
+        items: const [
+          GlassNavItem(Icons.home_outlined, Icons.home, 'Home'),
+          GlassNavItem(Icons.calendar_month_outlined, Icons.calendar_month, 'Calendar'),
+          GlassNavItem(Icons.menu_book_outlined, Icons.menu_book, 'Menu'),
+          GlassNavItem(Icons.receipt_long_outlined, Icons.receipt_long, 'History'),
         ],
       ),
     );

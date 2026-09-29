@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/api.dart';
 import '../core/theme.dart';
+import 'glass.dart';
 
 /// Colour + icon + label for a visit slot state (never colour alone).
 class SlotStyle {
@@ -90,28 +91,23 @@ class SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: padding ?? const EdgeInsets.all(18),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            if (title != null)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Row(children: [
-                  Expanded(
-                    child: Text(title!,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-                  ),
-                  if (trailing != null) trailing!,
-                ]),
+    return Glass(
+      onTap: onTap,
+      padding: padding ?? const EdgeInsets.all(18),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        if (title != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Row(children: [
+              Expanded(
+                child: Text(title!,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
               ),
-            child,
-          ]),
-        ),
-      ),
+              if (trailing != null) trailing!,
+            ]),
+          ),
+        child,
+      ]),
     );
   }
 }
