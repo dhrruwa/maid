@@ -213,96 +213,112 @@ class GlassNavItem {
   final String label;
 }
 
-/// Bottom tab bar in the style of Blinkit: pinned full width, a short bar on
-/// the top edge above the selected tab (it slides between tabs), a two-tone
-/// selected icon (saffron fill, espresso outline) and a bold label. Frosted
-/// glass, so content scrolling underneath shows through blurred.
+/// Floating tab bar (Blinkit / iOS Liquid Glass style): a dark frosted glass
+/// capsule, a lighter glass "lens" that slides behind the selected tab, a
+/// two-tone selected icon (light saffron fill, saffron outline) and a bold
+/// label. The capsule stays dark in light and dark mode.
 class GlassNavBar extends StatelessWidget {
   const GlassNavBar({super.key, required this.index, required this.onTap, required this.items});
   final int index;
   final ValueChanged<int> onTap;
   final List<GlassNavItem> items;
 
+  static const _capsule = Color(0xDB1C1613); // warm near-black glass
+  static const _label = Color(0xFFF6EFE9);
+
   @override
   Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final on = Theme.of(context).colorScheme.onSurface;
-    final muted = on.withValues(alpha: 0.55);
     final reduce = MediaQuery.of(context).disableAnimations;
-    final bottom = MediaQuery.paddingOf(context).bottom;
-
-    return ClipRect(
-      child: BackdropFilter(
-        filter: ui.ImageFilter.compose(
-          outer: ColorFilter.matrix(_saturation(1.6)),
-          inner: ui.ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+    const radius = 38.0;
+    return SafeArea(
+      top: false,
+      minimum: const EdgeInsets.fromLTRB(14, 0, 14, 10),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(radius),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.28), blurRadius: 26, offset: const Offset(0, 10))],
         ),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: dark ? const Color(0xB8140E0B) : Colors.white.withValues(alpha: 0.74),
-            border: Border(top: BorderSide(color: dark ? Colors.white.withValues(alpha: 0.10) : const Color(0x1F2A1B12))),
-          ),
-          child: Padding(
-            padding: EdgeInsets.only(bottom: bottom),
-            child: SizedBox(
-              height: 64,
-              child: LayoutBuilder(builder: (context, c) {
-                final w = c.maxWidth / items.length;
-                return Stack(children: [
-                  AnimatedPositioned(
-                    duration: reduce ? Duration.zero : const Duration(milliseconds: 320),
-                    curve: Curves.easeOutCubic,
-                    left: index * w + w * 0.28,
-                    width: w * 0.44,
-                    top: 0,
-                    height: 3.5,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: dark ? inkDark : espresso,
-                        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(3)),
-                      ),
-                    ),
-                  ),
-                  Row(children: [
-                    for (var i = 0; i < items.length; i++)
-                      Expanded(
-                        child: Semantics(
-                          button: true,
-                          selected: i == index,
-                          label: items[i].label,
-                          excludeSemantics: true,
-                          child: GestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            onTap: () => onTap(i),
-                            child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                              AnimatedScale(
-                                scale: i == index ? 1.1 : 1,
-                                duration: reduce ? Duration.zero : const Duration(milliseconds: 220),
-                                curve: Curves.easeOutBack,
-                                child: i == index
-                                    ? _TwoToneIcon(
-                                        fill: items[i].selectedIcon,
-                                        outline: items[i].icon,
-                                        outlineColor: dark ? const Color(0xFFF3E9E1) : espresso,
-                                      )
-                                    : Icon(items[i].icon, color: muted, size: 25),
-                              ),
-                              const SizedBox(height: 3),
-                              Text(
-                                items[i].label,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: i == index ? FontWeight.w800 : FontWeight.w500,
-                                  color: i == index ? on : muted,
-                                ),
-                              ),
-                            ]),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(radius),
+          child: BackdropFilter(
+            filter: ui.ImageFilter.compose(
+              outer: ColorFilter.matrix(_saturation(1.5)),
+              inner: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+            ),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: _capsule,
+                borderRadius: BorderRadius.circular(radius),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(7),
+                child: SizedBox(
+                  height: 64,
+                  child: LayoutBuilder(builder: (context, c) {
+                    final w = c.maxWidth / items.length;
+                    return Stack(children: [
+                      // The lens: a lighter glass pill behind the selected tab.
+                      AnimatedPositioned(
+                        duration: reduce ? Duration.zero : const Duration(milliseconds: 380),
+                        curve: Curves.easeOutBack,
+                        left: index * w,
+                        width: w,
+                        top: 0,
+                        bottom: 0,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(radius - 7),
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [Colors.white.withValues(alpha: 0.22), Colors.white.withValues(alpha: 0.13)],
+                            ),
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
                           ),
                         ),
                       ),
-                  ]),
-                ]);
-              }),
+                      Row(children: [
+                        for (var i = 0; i < items.length; i++)
+                          Expanded(
+                            child: Semantics(
+                              button: true,
+                              selected: i == index,
+                              label: items[i].label,
+                              excludeSemantics: true,
+                              child: GestureDetector(
+                                behavior: HitTestBehavior.opaque,
+                                onTap: () => onTap(i),
+                                child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                                  AnimatedScale(
+                                    scale: i == index ? 1.08 : 1,
+                                    duration: reduce ? Duration.zero : const Duration(milliseconds: 220),
+                                    curve: Curves.easeOutBack,
+                                    child: i == index
+                                        ? _TwoToneIcon(fill: items[i].selectedIcon, outline: items[i].icon)
+                                        : Icon(items[i].icon, color: _label, size: 28),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    items[i].label,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.fade,
+                                    softWrap: false,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: i == index ? FontWeight.w800 : FontWeight.w500,
+                                      color: _label,
+                                    ),
+                                  ),
+                                ]),
+                              ),
+                            ),
+                          ),
+                      ]),
+                    ]);
+                  }),
+                ),
+              ),
             ),
           ),
         ),
@@ -311,18 +327,18 @@ class GlassNavBar extends StatelessWidget {
   }
 }
 
-/// Filled icon in saffron with the outlined version drawn on top in espresso.
+/// Filled icon in light saffron with the outlined version drawn over it in
+/// saffron – the two-tone "selected" look.
 class _TwoToneIcon extends StatelessWidget {
-  const _TwoToneIcon({required this.fill, required this.outline, required this.outlineColor});
+  const _TwoToneIcon({required this.fill, required this.outline});
   final IconData fill;
   final IconData outline;
-  final Color outlineColor;
 
   @override
   Widget build(BuildContext context) {
     return Stack(alignment: Alignment.center, children: [
-      Icon(fill, color: accent, size: 25),
-      Icon(outline, color: outlineColor, size: 25),
+      Icon(fill, color: const Color(0xFFFFC08A), size: 28),
+      Icon(outline, color: accent, size: 28),
     ]);
   }
 }

@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FAB36A"/><stop offset="0.5" stop-color="#EC8331"/><stop offset="1" stop-color="#CF5D18"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.6" r="0.5">
+      <stop offset="0" stop-color="#FFE3C4" stop-opacity="0.35"/><stop offset="1" stop-color="#FFE3C4" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="sheen" cx="0.18" cy="0.08" r="0.85">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.5"/><stop offset="0.55" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="pot" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#FFE7D1"/>
+    </linearGradient>
+    <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#FFF1E4"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#7A3308" flood-opacity="0.38"/>
+    </filter></defs>
+  <rect width="1024" height="1024" fill="url(#bg)"/><rect width="1024" height="1024" fill="url(#glow)"/><rect width="1024" height="1024" fill="url(#sheen)"/>
+  
+    <g filter="url(#shadow)">
+      <g fill="none" stroke="#FFFFFF" stroke-opacity="0.92" stroke-width="30" stroke-linecap="round">
+        <path d="M428 468 C398 426 458 398 428 350 C410 320 428 300 438 290"/>
+        <path d="M512 468 C482 418 548 388 512 330 C492 298 512 276 522 266"/>
+        <path d="M596 468 C566 426 626 398 596 350 C578 320 596 300 606 290"/>
+      </g>
+      
+    <rect x="232" y="528" width="86" height="46" rx="23" fill="url(#pot)"/>
+    <rect x="706" y="528" width="86" height="46" rx="23" fill="url(#pot)"/>
+    <path d="M300 540 H724 C724 670 636 756 512 756 C388 756 300 670 300 540 Z" fill="url(#pot)"/>
+    <rect x="272" y="506" width="480" height="54" rx="27" fill="url(#rim)"/><path d="M438 632 L494 686 L596 584" fill="none" stroke="#2E9E5B" stroke-width="44" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+</svg>

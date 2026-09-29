@@ -1,0 +1,11 @@
+# App icons – regenerate with: dart run flutter_launcher_icons
+# Source artwork: ../branding/*.svg (rendered into assets/icon/).
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/icon.png"
+  remove_alpha_ios: true
+  adaptive_icon_background: "assets/icon/icon_bg.png"
+  adaptive_icon_foreground: "assets/icon/icon_fg.png"
+  adaptive_icon_monochrome: "assets/icon/icon_mono.png"
+  min_sdk_android: 24

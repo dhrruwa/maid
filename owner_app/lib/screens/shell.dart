@@ -49,7 +49,7 @@ class _ShellState extends State<Shell> {
           ),
         ],
       ),
-      // Content scrolls under the frosted tab bar.
+      // Content scrolls under the floating glass tab bar.
       extendBody: true,
       body: BackdropGroup(
         child: IndexedStack(

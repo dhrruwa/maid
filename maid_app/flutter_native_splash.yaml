@@ -1,0 +1,13 @@
+# Launch screen – regenerate with: dart run flutter_native_splash:create
+flutter_native_splash:
+  color: "#FFF6EE"
+
+  image: assets/icon/splash.png
+  android_12:
+    image: assets/icon/splash_android12.png
+    color: "#FFF6EE"
+
+    icon_background_color: "#E8731F"
+  android: true
+  ios: true
+  web: false

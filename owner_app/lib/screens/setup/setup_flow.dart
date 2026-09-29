@@ -7,6 +7,7 @@ import '../../core/app_state.dart';
 import '../../core/device.dart';
 import '../../core/push.dart';
 import '../../widgets/common.dart';
+import '../../widgets/logo.dart';
 import '../../widgets/pin_pad.dart';
 import '../qr_views.dart';
 
@@ -173,19 +174,11 @@ class _Welcome extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         const Spacer(),
-        Center(
-          child: Container(
-            width: 120,
-            height: 120,
-            decoration: BoxDecoration(color: scheme.primaryContainer, shape: BoxShape.circle),
-            child: Icon(Icons.soup_kitchen_rounded, size: 64, color: scheme.primary),
-          ),
-        ),
+        const Center(child: AppLogo(size: 128)),
         const SizedBox(height: 28),
         Text('Cook Dashboard',
             textAlign: TextAlign.center,

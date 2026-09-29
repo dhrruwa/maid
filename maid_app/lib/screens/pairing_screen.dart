@@ -6,8 +6,8 @@ import '../core/device.dart';
 import '../core/i18n.dart';
 import '../core/offline_queue.dart';
 import '../core/push.dart';
-import '../core/theme.dart';
 import '../widgets/common.dart';
+import '../widgets/logo.dart';
 import 'home_screen.dart';
 import 'qr_scanner.dart';
 
@@ -101,14 +101,7 @@ class _PairingScreenState extends State<PairingScreen> {
       body: SafeArea(
         child: ListView(padding: const EdgeInsets.all(24), children: [
           const SizedBox(height: 12),
-          Center(
-            child: Container(
-              width: 110,
-              height: 110,
-              decoration: BoxDecoration(color: accent.withValues(alpha: 0.12), shape: BoxShape.circle),
-              child: const Icon(Icons.soup_kitchen_rounded, size: 60, color: accent),
-            ),
-          ),
+          const Center(child: AppLogo(size: 120)),
           const SizedBox(height: 20),
           Text(L.t('pair_welcome'),
               textAlign: TextAlign.center,
