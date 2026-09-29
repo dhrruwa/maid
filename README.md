@@ -1,5 +1,11 @@
 # Cook Dashboard + Cook Attendance
 
+<p>
+  <img src="branding/cook-dashboard-rounded.svg" width="96" alt="Cook Dashboard logo">
+  &nbsp;
+  <img src="branding/cook-attendance-rounded.svg" width="96" alt="Cook Attendance logo">
+</p>
+
 Two Flutter apps and a Supabase backend for tracking a home cook's attendance, salary, holidays, leave and daily menu.
 
 | Part | Folder | Platform |
@@ -11,6 +17,8 @@ Two Flutter apps and a Supabase backend for tracking a home cook's attendance, s
 - **Setup, build and install steps:** [docs/SETUP_GUIDE.md](docs/SETUP_GUIDE.md)
 - **Edge Function API (maid app):** [docs/API.md](docs/API.md)
 - **Mobbin UI references:** [docs/mobbin_references.md](docs/mobbin_references.md)
+- **Colours and glass style:** [docs/COLOR_PALETTE.md](docs/COLOR_PALETTE.md)
+- **Logos and icons:** `branding/` (SVG sources); generated into each app's `assets/icon/`
 - **Original build prompts:** `owner_app_prompt_4.md`, `maid_app_prompt_4.md`
 
 ## Rules in short

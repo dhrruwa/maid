@@ -149,6 +149,13 @@ The first time, on the iPhone: **Settings → Privacy & Security → Developer M
 - Every change is written to `activity_log` by triggers: who did it, old value, new value and time. That table can't be updated or deleted.
 - Paid months are frozen snapshots, so old slips never change when rates change.
 
+## Changing the app icons
+The logos are SVG files in `branding/`: the owner's is a saffron pot with steam rising as bars, and the maid's is a white pot with a green tick. After editing them, render the PNGs into each app's `assets/icon/` folder (`icon.png`, `icon_bg.png`, `icon_fg.png`, `icon_mono.png`, `logo.png`, `splash.png`, `splash_android12.png`), then run this in each app folder:
+```bash
+dart run flutter_launcher_icons            # every iPhone and Android icon size
+dart run flutter_native_splash:create      # launch screen
+```
+
 ## Appendix: remove the test house created during setup
 While building this, an end-to-end test created a house called **"E2E Home"** in your database. It is completely separate from your real house and harmless. If you want it gone, run this in the SQL Editor. It briefly turns off the no-delete protections, only for that house:
 
