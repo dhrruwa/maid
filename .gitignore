@@ -4,3 +4,4 @@
 supabase/.temp/
 supabase/.branches/
 dist/
+dart_defines.json

@@ -67,7 +67,22 @@ This schedules:
    - In Xcode (`owner_app/ios/Runner.xcworkspace`) → Runner → **Signing & Capabilities → + Capability → Push Notifications**.
 
 ## 6. Put the keys into the apps
-Edit **both** `owner_app/lib/config.dart` and `maid_app/lib/config.dart`:
+**Recommended:** keep the keys out of git. Create `dart_defines.json` in the repo root (it is git-ignored):
+```json
+{
+  "SUPABASE_URL": "https://YOUR_PROJECT_REF.supabase.co",
+  "SUPABASE_ANON_KEY": "eyJ...",
+  "FIREBASE_API_KEY": "AIza...",
+  "FIREBASE_APP_ID": "1:123:android:...",
+  "FIREBASE_IOS_APP_ID": "1:123:ios:...",
+  "FIREBASE_SENDER_ID": "123456789",
+  "FIREBASE_PROJECT_ID": "my-project"
+}
+```
+Then add `--dart-define-from-file=../dart_defines.json` to every build command below, for example `flutter build apk --release --dart-define-from-file=../dart_defines.json`.
+The two apps have different Firebase App IDs, so keep one file per app if you use Firebase, e.g. `dart_defines.owner.json` and `dart_defines.maid.json`.
+
+**Or** edit the default values directly in **both** `owner_app/lib/config.dart` and `maid_app/lib/config.dart`. Don't do this if your repo is public:
 
 ```dart
 static const supabaseUrl = ... defaultValue: 'https://YOUR_PROJECT_REF.supabase.co'
