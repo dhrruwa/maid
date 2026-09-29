@@ -17,32 +17,51 @@ class HolidaysScreen extends StatefulWidget {
 class _HolidaysScreenState extends State<HolidaysScreen> {
   List<Map<String, dynamic>>? _items;
   Object? _error;
+  int _seenVersion = -1;
 
   @override
   void initState() {
     super.initState();
+    // Saved copies of all four months (shared with the Calendar): shown at once.
+    final saved = [for (final m in _months) Api.cached('get_month_summary', body: {'month': m})];
+    if (!saved.contains(null)) _items = _holidays(saved.cast<Map<String, dynamic>>());
+    AppState.i.addListener(_onState);
     _load();
   }
 
-  Future<void> _load() async {
-    try {
-      final now = istToday();
-      final months = [
-        DateTime(now.year, now.month - 1),
-        DateTime(now.year, now.month),
-        DateTime(now.year, now.month + 1),
-        DateTime(now.year, now.month + 2),
-      ];
-      final res = await Future.wait(months.map((m) => Api.call('get_month_summary', {'month': ym(m)})));
-      final all = <Map<String, dynamic>>[];
-      for (final r in res) {
-        for (final h in (r['summary']['holidays'] as List)) {
-          all.add(Map<String, dynamic>.from(h));
-        }
+  @override
+  void dispose() {
+    AppState.i.removeListener(_onState);
+    super.dispose();
+  }
+
+  void _onState() {
+    if (AppState.i.version != _seenVersion) _load();
+  }
+
+  /// Last month to two months ahead.
+  static List<String> get _months {
+    final now = istToday();
+    return [for (var i = -1; i <= 2; i++) ym(DateTime(now.year, now.month + i))];
+  }
+
+  static List<Map<String, dynamic>> _holidays(List<Map<String, dynamic>> res) {
+    final all = <Map<String, dynamic>>[];
+    for (final r in res) {
+      for (final h in (r['summary']['holidays'] as List)) {
+        all.add(Map<String, dynamic>.from(h));
       }
-      all.sort((a, b) => '${a['date']}'.compareTo('${b['date']}'));
+    }
+    all.sort((a, b) => '${a['date']}'.compareTo('${b['date']}'));
+    return all;
+  }
+
+  Future<void> _load() async {
+    _seenVersion = AppState.i.version;
+    try {
+      final res = await Future.wait(_months.map((m) => Api.read('get_month_summary', body: {'month': m})));
       if (mounted) setState(() {
-        _items = all;
+        _items = _holidays(res);
         _error = null;
       });
     } catch (e) {
@@ -56,10 +75,8 @@ class _HolidaysScreenState extends State<HolidaysScreen> {
     if (!ok || !mounted) return;
     final r = await busy(context, () => Api.call('delete_item', {'entity_type': 'holidays', 'id': h['id']}),
         success: 'Holiday removed');
-    if (r != null) {
-      AppState.i.changed();
-      _load();
-    }
+    // Reloads this list (and the other screens) through the AppState listener.
+    if (r != null) AppState.i.changed();
   }
 
   @override
@@ -81,6 +98,7 @@ class _HolidaysScreenState extends State<HolidaysScreen> {
               : ListView(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
                   children: [
+                    if (_error != null) StaleNote(error: _error!, onRetry: _load),
                     for (final h in _items!)
                       Card(
                         margin: const EdgeInsets.only(bottom: 8),

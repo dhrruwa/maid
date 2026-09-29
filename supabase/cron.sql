@@ -1,7 +1,7 @@
 -- Scheduled functions (pg_cron + pg_net).
 -- 1. Replace YOUR_CRON_SECRET below with the same value you saved as the
 --    CRON_SECRET Edge Function secret.
--- 2. Replace YOUR_PROJECT_REF with your project ref (e.g. rvxhrmyeefdchdlwqkht).
+-- 2. Replace YOUR_PROJECT_REF with your project ref (e.g. sbyespnawbknbnlbrmht).
 -- 3. Run this whole file once in the Supabase SQL editor.
 
 create extension if not exists pg_cron;

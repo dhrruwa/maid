@@ -24,27 +24,57 @@ class _MenuScreenState extends State<MenuScreen> {
   DateTime _date = istToday();
   String _slot = istNow().hour < 12 ? 'morning' : 'evening';
   Map<String, dynamic>? _menu;
+
+  /// The date [_menu] belongs to (it can still be the previous day's while loading).
+  String? _menuDate;
   Object? _error;
-  bool _loading = false;
+  int _loading = 0;
+  int _seenVersion = -1;
 
   @override
   void initState() {
     super.initState();
+    AppState.i.addListener(_onState);
     _load();
   }
 
+  @override
+  void dispose() {
+    AppState.i.removeListener(_onState);
+    super.dispose();
+  }
+
+  void _onState() {
+    if (AppState.i.version != _seenVersion) _load();
+  }
+
   Future<void> _load() async {
-    setState(() => _loading = true);
-    try {
-      final r = await Api.call('get_menu', {'date': ymd(_date)});
-      if (mounted) setState(() {
-        _menu = r;
-        _error = null;
-      });
-    } catch (e) {
-      if (mounted) setState(() => _error = e);
+    _seenVersion = AppState.i.version;
+    final date = ymd(_date);
+    // Show the saved copy of this day at once, then refresh it.
+    if (_menuDate != date) {
+      _error = null;
+      final c = Api.cached('get_menu', body: {'date': date});
+      if (c != null) {
+        _menu = c;
+        _menuDate = date;
+      }
     }
-    if (mounted) setState(() => _loading = false);
+    setState(() => _loading++);
+    try {
+      final r = await Api.read('get_menu', body: {'date': date});
+      // Ignore a reply for a day that is no longer selected.
+      if (mounted && date == ymd(_date)) {
+        setState(() {
+          _menu = r;
+          _menuDate = date;
+          _error = null;
+        });
+      }
+    } catch (e) {
+      if (mounted && date == ymd(_date)) setState(() => _error = e);
+    }
+    if (mounted) setState(() => _loading--);
   }
 
   List<Map<String, dynamic>> get _items =>
@@ -53,6 +83,8 @@ class _MenuScreenState extends State<MenuScreen> {
   Map? get _off => _menu?[_slot]?['off'] as Map?;
 
   Future<void> _save(List<Map<String, dynamic>> items, {String? success}) async {
+    // The list on screen is still another day's: never write it to this day.
+    if (_menuDate != ymd(_date)) return;
     final r = await busy(
       context,
       () => Api.call('set_menu', {
@@ -62,10 +94,8 @@ class _MenuScreenState extends State<MenuScreen> {
       }),
       success: success,
     );
-    if (r != null) {
-      AppState.i.changed();
-      _load();
-    }
+    // Reloads this screen (and the others) through the AppState listener.
+    if (r != null) AppState.i.changed();
   }
 
   Future<void> _add() async {
@@ -171,13 +201,15 @@ class _MenuScreenState extends State<MenuScreen> {
           ),
         ),
       ),
-      if (_loading) const LinearProgressIndicator(),
+      if (_loading > 0 && _menuDate != ymd(_date)) const LinearProgressIndicator(),
       Expanded(
-        child: _menu == null
+        // Never show another day's dishes under this day's date while it loads.
+        child: _menu == null || _menuDate != ymd(_date)
             ? (_error != null ? ErrorRetry(error: _error!, onRetry: _load) : const SizedBox())
             : RefreshIndicator(
                 onRefresh: _load,
                 child: ListView(padding: EdgeInsets.fromLTRB(16, 12, 16, 24 + MediaQuery.paddingOf(context).bottom), children: [
+                  if (_error != null) StaleNote(error: _error!, onRetry: _load),
                   if (off != null)
                     _OffBanner(off: off)
                   else if (_items.isEmpty)

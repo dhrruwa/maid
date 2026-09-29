@@ -29,37 +29,56 @@ export function json(data: unknown, status = 200): Response {
 // deno-lint-ignore no-explicit-any
 export type Body = Record<string, any>;
 
+export type Handler = (body: Body, req: Request) => Promise<unknown>;
+
+/** Runs a handler on an already-parsed body and formats the response. */
+export async function runHandler(fn: Handler, body: Body, req: Request): Promise<Response> {
+  try {
+    const result = await fn(body, req);
+    return json({ ok: true, ...(result as object ?? {}) });
+  } catch (e) {
+    if (e instanceof AppError) {
+      return json(
+        { ok: false, error: { code: e.code, message: e.message, details: e.details } },
+        e.status,
+      );
+    }
+    console.error(e);
+    return json(
+      { ok: false, error: { code: "SERVER_ERROR", message: String((e as Error)?.message ?? e) } },
+      500,
+    );
+  }
+}
+
+export async function parseBody(req: Request): Promise<Body | Response> {
+  try {
+    const text = await req.text();
+    return text ? JSON.parse(text) : {};
+  } catch {
+    return json({ ok: false, error: { code: "BAD_JSON", message: "Body must be JSON" } }, 400);
+  }
+}
+
 /**
  * Wraps a handler. Success → { ok: true, ...result }.
  * AppError → { ok: false, error: { code, message, details } } (HTTP 200 so the
  * apps can read it without special exception handling).
+ *
+ * When the module is imported by the `api` router, the handler is registered
+ * with the router instead of starting its own server.
  */
-export function handle(fn: (body: Body, req: Request) => Promise<unknown>) {
+export function handle(fn: Handler) {
+  const register = (globalThis as { __registerHandler?: (fn: Handler) => void }).__registerHandler;
+  if (register) {
+    register(fn);
+    return;
+  }
   Deno.serve(async (req) => {
     if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-    let body: Body = {};
-    try {
-      const text = await req.text();
-      body = text ? JSON.parse(text) : {};
-    } catch {
-      return json({ ok: false, error: { code: "BAD_JSON", message: "Body must be JSON" } }, 400);
-    }
-    try {
-      const result = await fn(body, req);
-      return json({ ok: true, ...(result as object ?? {}) });
-    } catch (e) {
-      if (e instanceof AppError) {
-        return json(
-          { ok: false, error: { code: e.code, message: e.message, details: e.details } },
-          e.status,
-        );
-      }
-      console.error(e);
-      return json(
-        { ok: false, error: { code: "SERVER_ERROR", message: String((e as Error)?.message ?? e) } },
-        500,
-      );
-    }
+    const body = await parseBody(req);
+    if (body instanceof Response) return body;
+    return runHandler(fn, body, req);
   });
 }
 

@@ -1,9 +1,9 @@
 # Owner + Maid: home cook attendance
 
 <p>
-  <img src="branding/cook-dashboard-rounded.svg" width="96" alt="Owner logo">
+  <img src="branding/owner-rounded.svg" width="96" alt="Owner app logo">
   &nbsp;
-  <img src="branding/cook-attendance-rounded.svg" width="96" alt="Maid logo">
+  <img src="branding/maid-rounded.png" width="96" alt="Maid logo">
 </p>
 
 Two Flutter apps and a Supabase backend for tracking a home cook's attendance, salary, holidays, leave and daily menu.

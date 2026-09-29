@@ -15,21 +15,34 @@ class DishesScreen extends StatefulWidget {
 }
 
 class _DishesScreenState extends State<DishesScreen> {
-  List<Map<String, dynamic>>? _dishes;
+  List<Map<String, dynamic>>? _dishes = parseDishes(Api.cached('list_dishes'));
   Object? _error;
+  int _seenVersion = -1;
 
   @override
   void initState() {
     super.initState();
+    AppState.i.addListener(_onState);
     _load();
   }
 
+  @override
+  void dispose() {
+    AppState.i.removeListener(_onState);
+    super.dispose();
+  }
+
+  void _onState() {
+    if (AppState.i.version != _seenVersion) _load();
+  }
+
   Future<void> _load() async {
+    _seenVersion = AppState.i.version;
     try {
-      final r = await Api.call('list_dishes');
+      final r = await Api.read('list_dishes');
       if (mounted) {
         setState(() {
-          _dishes = (r['dishes'] as List).map((e) => Map<String, dynamic>.from(e)).toList();
+          _dishes = parseDishes(r);
           _error = null;
         });
       }
@@ -44,10 +57,8 @@ class _DishesScreenState extends State<DishesScreen> {
     if (!ok || !mounted) return;
     final r = await busy(context, () => Api.call('delete_item', {'entity_type': 'dishes', 'id': d['id']}),
         success: 'Dish deleted');
-    if (r != null) {
-      AppState.i.changed();
-      _load();
-    }
+    // Reloads this list (and the other screens) through the AppState listener.
+    if (r != null) AppState.i.changed();
   }
 
   @override
@@ -60,10 +71,11 @@ class _DishesScreenState extends State<DishesScreen> {
               ? const Center(child: Text('Dishes you add to a menu are saved here'))
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
-                  itemCount: _dishes!.length,
+                  itemCount: _dishes!.length + (_error != null ? 1 : 0),
                   separatorBuilder: (_, _) => const SizedBox(height: 8),
                   itemBuilder: (c, i) {
-                    final d = _dishes![i];
+                    if (_error != null && i == 0) return StaleNote(error: _error!, onRetry: _load);
+                    final d = _dishes![_error != null ? i - 1 : i];
                     return SectionCard(
                       padding: const EdgeInsets.all(12),
                       child: Row(children: [

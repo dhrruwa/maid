@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 
-import '../core/api.dart';
+import '../core/cached_load.dart';
 import '../core/i18n.dart';
 import '../core/theme.dart';
 import 'glass.dart';
@@ -18,20 +18,22 @@ class WeekTimeline extends StatefulWidget {
   /// Glass opacity; higher on coloured backgrounds (result screen).
   final double opacity;
 
+  /// The get_timeline request body (also used by Home's prefetch).
+  static Map<String, dynamic> request() => {'from': istDate(-6), 'to': istDate()};
+
   @override
   State<WeekTimeline> createState() => _WeekTimelineState();
 }
 
-class _WeekTimelineState extends State<WeekTimeline> with SingleTickerProviderStateMixin {
-  Map<String, dynamic>? _data;
-  bool _failed = false;
+class _WeekTimelineState extends State<WeekTimeline> with SingleTickerProviderStateMixin, CachedLoad {
   late final AnimationController _pulse =
       AnimationController(vsync: this, duration: const Duration(milliseconds: 1400));
 
   @override
   void initState() {
     super.initState();
-    _load();
+    // Saved rows show at once; the fresh week replaces them when it arrives.
+    load('get_timeline', WeekTimeline.request());
   }
 
   @override
@@ -40,27 +42,27 @@ class _WeekTimelineState extends State<WeekTimeline> with SingleTickerProviderSt
     super.dispose();
   }
 
-  Future<void> _load() async {
-    try {
-      final r = await Api.call('get_timeline', {'from': istDate(-6), 'to': istDate()});
-      if (!mounted) return;
-      setState(() => _data = r);
-      if (widget.pulseSlot != null && !MediaQuery.of(context).disableAnimations) {
-        _pulse.repeat();
-        Future.delayed(const Duration(milliseconds: 4200), () => mounted ? _pulse.stop() : null);
-      }
-    } catch (_) {
-      if (mounted) setState(() => _failed = true);
+  /// Right after a scan (result screen) the saved week doesn't have it yet:
+  /// wait for the fresh week so the new visit shows and pulses, never a stale
+  /// week where it looks missing.
+  @override
+  bool get showSaved => widget.pulseSlot == null;
+
+  @override
+  void onFresh(Map<String, dynamic> fresh) {
+    if (widget.pulseSlot != null && !MediaQuery.of(context).disableAnimations) {
+      _pulse.repeat();
+      Future.delayed(const Duration(milliseconds: 4200), () => mounted ? _pulse.stop() : null);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final d = _data;
+    final d = data;
     if (d == null) {
       return Glass(
         opacity: widget.opacity,
-        child: _failed
+        child: error != null
             ? Text(L.t('timeline_error'), style: const TextStyle(fontSize: 15))
             : const SizedBox(height: 60, child: Center(child: CircularProgressIndicator())),
       );

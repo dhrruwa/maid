@@ -4,6 +4,10 @@ import '../../core/api.dart';
 import '../../core/youtube.dart';
 import '../../widgets/common.dart';
 
+/// The dishes of a `list_dishes` reply (null stays null).
+List<Map<String, dynamic>>? parseDishes(Map<String, dynamic>? r) =>
+    r == null ? null : (r['dishes'] as List).map((e) => Map<String, dynamic>.from(e)).toList();
+
 /// Pick a saved dish or create a new one. Returns {dish_id, name, notes} or null.
 Future<Map<String, dynamic>?> showDishPicker(BuildContext context) {
   return showModalBottomSheet<Map<String, dynamic>>(
@@ -29,14 +33,20 @@ class _DishPickerState extends State<_DishPicker> with SingleTickerProviderState
   @override
   void initState() {
     super.initState();
-    Api.call('list_dishes').then((r) {
-      if (!mounted) return;
-      final list = (r['dishes'] as List).map((e) => Map<String, dynamic>.from(e)).toList();
-      setState(() => _dishes = list);
-      if (list.isEmpty) _tabs.index = 1;
+    // Saved list at once, then the fresh one.
+    final saved = parseDishes(Api.cached('list_dishes'));
+    if (saved != null) _show(saved);
+    Api.read('list_dishes').then((r) {
+      if (mounted) setState(() => _show(parseDishes(r)!));
     }).catchError((e) {
-      if (mounted) setState(() => _dishes = []);
+      if (mounted) setState(() => _dishes ??= []);
     });
+  }
+
+  void _show(List<Map<String, dynamic>> list) {
+    // Only jump to "New dish" when the first list shown is empty, not under the user's finger later.
+    if (_dishes == null && list.isEmpty) _tabs.index = 1;
+    _dishes = list;
   }
 
   @override

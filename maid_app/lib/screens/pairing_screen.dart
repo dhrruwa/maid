@@ -42,6 +42,9 @@ class _PairingScreenState extends State<PairingScreen> {
         'fcm_token': ?Push.token,
         'lang': L.code,
       });
+      // Saved screens may belong to a house this phone was paired with before.
+      ApiCache.clear();
+      await Device.prefs.remove('home_cache');
       await Device.setName(_name.text.trim());
       await Device.setPaired(true);
       OfflineQueue.start();

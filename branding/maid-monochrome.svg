@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+<defs>
+  <clipPath id="disc"><circle cx="512" cy="514.72" r="266.04"/></clipPath>
+  <mask id="m" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024">
+    <g transform="translate(512 560) scale(1.06) translate(-512 -560)">
+    <g fill="#FFF">
+      <circle cx="606" cy="334" r="54"/>
+      <path d="M432 490 C404 472 384 446 384 410 A128 126 0 0 1 640 410 C640 446 620 472 592 490 Z"/>
+      <ellipse cx="409" cy="452" rx="12" ry="19"/><circle cx="409" cy="474" r="7.5"/><ellipse cx="615" cy="452" rx="12" ry="19"/><circle cx="615" cy="474" r="7.5"/>
+      <path d="M512 318 C574 318 610 362 610 426 C610 496 566 550 512 550 C458 550 414 496 414 426 C414 362 450 318 512 318 Z"/>
+      <g clip-path="url(#disc)"><path d="M480 506 L544 506 L550 600 Q512 652 474 600 Z"/><path d="M282 880 C282 708 350 632 446 612 Q468 606 480 600 Q512 642 544 600 Q556 606 578 612 C674 632 742 708 742 880 Z"/></g>
+    </g>
+    <path d="M564.1 294.9 A128 126 0 0 1 637.2 383.8" stroke="#000" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="11"/>
+    <g transform="translate(570.1 297.7) rotate(27.0)"><path d="M0 -16 C9 -10 10 3 0 10 C-10 3 -9 -10 0 -16 Z" fill="#FFF" stroke="#000" stroke-width="5"/></g><g transform="translate(582.6 304.9) rotate(33.5)"><path d="M0 -16 C9 -10 10 3 0 10 C-10 3 -9 -10 0 -16 Z" fill="#FFF" stroke="#000" stroke-width="5"/></g><g transform="translate(594.3 313.5) rotate(40.0)"><path d="M0 -16 C9 -10 10 3 0 10 C-10 3 -9 -10 0 -16 Z" fill="#FFF" stroke="#000" stroke-width="5"/></g><g transform="translate(604.8 323.3) rotate(46.5)"><path d="M0 -16 C9 -10 10 3 0 10 C-10 3 -9 -10 0 -16 Z" fill="#FFF" stroke="#000" stroke-width="5"/></g><g transform="translate(614.2 334.2) rotate(53.0)"><path d="M0 -16 C9 -10 10 3 0 10 C-10 3 -9 -10 0 -16 Z" fill="#FFF" stroke="#000" stroke-width="5"/></g><g transform="translate(622.3 346.1) rotate(59.5)"><path d="M0 -16 C9 -10 10 3 0 10 C-10 3 -9 -10 0 -16 Z" fill="#FFF" stroke="#000" stroke-width="5"/></g><g transform="translate(628.9 358.8) rotate(66.0)"><path d="M0 -16 C9 -10 10 3 0 10 C-10 3 -9 -10 0 -16 Z" fill="#FFF" stroke="#000" stroke-width="5"/></g><g transform="translate(634.1 372.1) rotate(72.5)"><path d="M0 -16 C9 -10 10 3 0 10 C-10 3 -9 -10 0 -16 Z" fill="#FFF" stroke="#000" stroke-width="5"/></g>
+    <path d="M412 480 C412 404 446 360 512 346 C578 360 612 404 612 480" stroke="#000" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="12"/>
+    <path d="M428 500 C450 536 480 554 512 554 C544 554 574 536 596 500" stroke="#000" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="12"/>
+    <g clip-path="url(#disc)">
+      <path d="M480 600 Q512 642 544 600" stroke="#000" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="12"/>
+      <path d="M446 664 Q446 650 460 650 L564 650 Q578 650 578 664 L608 880 L416 880 Z" stroke="#000" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="12"/>
+      <path d="M460 656 L484 606 M564 656 L540 606" stroke="#000" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="30"/>
+      <path d="M460 656 L484 606 M564 656 L540 606" stroke="#FFF" stroke-width="12" stroke-linecap="round"/>
+      <path d="M458 756 L566 756" stroke="#FFF" stroke-width="8"/>
+      <path d="M474 756 L550 756" stroke="#000" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="7"/>
+    </g>
+    <path d="M455 414 Q475 402 495 411 M529 411 Q549 402 569 414" stroke="#000" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="7"/>
+    <ellipse cx="475" cy="446" rx="11" ry="14" fill="#000"/><ellipse cx="549" cy="446" rx="11" ry="14" fill="#000"/>
+    <path d="M482 494 Q512 522 542 494" stroke="#000" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="9"/>
+    <circle cx="512" cy="412" r="6.5" fill="#000"/>
+    </g>
+  </mask>
+</defs>
+<rect width="1024" height="1024" fill="#FFFFFF" mask="url(#m)"/>
+</svg>

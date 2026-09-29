@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/api.dart';
+import '../core/cached_load.dart';
 import '../core/i18n.dart';
 import '../core/theme.dart';
 import '../widgets/common.dart';
@@ -14,12 +15,11 @@ class LeaveScreen extends StatefulWidget {
   State<LeaveScreen> createState() => _LeaveScreenState();
 }
 
-class _LeaveScreenState extends State<LeaveScreen> {
+class _LeaveScreenState extends State<LeaveScreen> with CachedLoad {
   DateTime _date = DateTime.parse(istDate(1));
   String _slot = 'full';
   final _reason = TextEditingController();
   bool _sending = false;
-  List<Map<String, dynamic>>? _list;
 
   @override
   void initState() {
@@ -27,13 +27,14 @@ class _LeaveScreenState extends State<LeaveScreen> {
     _loadList();
   }
 
-  Future<void> _loadList() async {
-    try {
-      final r = await Api.call('list_leave');
-      if (mounted) setState(() => _list = (r['leaves'] as List).map((e) => Map<String, dynamic>.from(e)).toList());
-    } catch (_) {
-      if (mounted) setState(() => _list ??= []);
-    }
+  /// Her requests: saved list at once, then the fresh one.
+  Future<void> _loadList() => load('list_leave');
+
+  /// null while loading; empty (not an error) when it couldn't load.
+  List<Map<String, dynamic>>? get _list {
+    final d = data;
+    if (d == null) return error != null ? const [] : null;
+    return (d['leaves'] as List).map((e) => Map<String, dynamic>.from(e)).toList();
   }
 
   Future<void> _pickDate() async {
@@ -65,6 +66,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final list = _list;
     Widget slotButton(String slot, IconData icon) {
       final sel = _slot == slot;
       return Expanded(
@@ -146,12 +148,13 @@ class _LeaveScreenState extends State<LeaveScreen> {
         const SizedBox(height: 28),
         Text(L.t('my_requests'), style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w800)),
         const SizedBox(height: 8),
-        if (_list == null)
+        if (stale) const SavedNote(),
+        if (list == null)
           const Center(child: CircularProgressIndicator())
-        else if (_list!.isEmpty)
+        else if (list.isEmpty)
           Text(L.t('no_requests'), style: const TextStyle(fontSize: 17))
         else
-          for (final l in _list!) LeaveTile(leave: l),
+          for (final l in list) LeaveTile(leave: l),
       ]),
     );
   }

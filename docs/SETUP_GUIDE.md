@@ -10,13 +10,13 @@ This repo has three parts:
 
 Docs: `docs/API.md` (Edge Functions the maid app uses) and `docs/mobbin_references.md` (the UI reference for each screen).
 
-> **Already done for you:** the Supabase project `rvxhrmyeefdchdlwqkht` has every table, trigger and security rule, and all 34 Edge Functions are deployed and tested.
+> **Already done for you:** the Supabase project `sbyespnawbknbnlbrmht` has every table, trigger and security rule, and all 34 Edge Functions are deployed and tested.
 > **You still need to do:** step 3 (cron secret), step 4 (scheduled reminders), step 5 (Firebase) and step 6 (paste the keys into the apps). Steps 1–2 are only for setting up a brand-new Supabase project.
 
 ---
 
 ## 1. Create a Supabase project (only if starting fresh)
-1. Go to <https://supabase.com> → **New project**. Choose a region near India (for example Mumbai).
+1. Go to <https://supabase.com> → **New project**. Choose Mumbai (ap-south-1): the database and the functions must be close to the phones — this project runs there.
 2. Open **SQL Editor → New query**, paste the whole of `supabase/migrations/20260929000000_init.sql`, and press **Run**.
    This creates all tables, the activity-log triggers (history is append-only and nothing is ever hard-deleted), row-level security, and the private `slips` storage bucket.
 
@@ -41,7 +41,7 @@ Supabase dashboard → **Edge Functions → Secrets** → add:
 
 ## 4. Turn on the scheduled reminders
 1. Open `supabase/cron.sql`.
-2. Replace `YOUR_PROJECT_REF` (for example `rvxhrmyeefdchdlwqkht`) and `YOUR_CRON_SECRET` (the same value as in step 3).
+2. Replace `YOUR_PROJECT_REF` (for example `sbyespnawbknbnlbrmht`) and `YOUR_CRON_SECRET` (the same value as in step 3).
 3. Paste the file into **SQL Editor** and press **Run**.
 
 This schedules:

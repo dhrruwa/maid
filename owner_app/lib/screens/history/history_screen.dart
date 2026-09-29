@@ -59,6 +59,10 @@ IconData _iconFor(String entity) => switch (entity) {
       _ => Icons.settings_rounded,
     };
 
+/// Body of the Activity tab's first page with no filters: saved on the phone
+/// and fetched ahead of time from Home.
+const Map<String, dynamic> activityFirstPage = {'limit': 50};
+
 class ActivityTab extends StatefulWidget {
   const ActivityTab({super.key});
 
@@ -76,6 +80,7 @@ class _ActivityTabState extends State<ActivityTab> with AutomaticKeepAliveClient
   bool _loading = false;
   Object? _error;
   int _seenVersion = -1;
+  int _request = 0;
 
   @override
   bool get wantKeepAlive => true;
@@ -83,6 +88,7 @@ class _ActivityTabState extends State<ActivityTab> with AutomaticKeepAliveClient
   @override
   void initState() {
     super.initState();
+    _showSaved();
     AppState.i.addListener(_onState);
     _load(reset: true);
   }
@@ -97,21 +103,52 @@ class _ActivityTabState extends State<ActivityTab> with AutomaticKeepAliveClient
     if (AppState.i.version != _seenVersion) _load(reset: true);
   }
 
+  bool get _unfiltered => _selected.isEmpty && _actor == null && _range == null && _search.isEmpty;
+
+  /// Shows the saved first page (no filters) at once, if there is one.
+  void _showSaved() {
+    if (!_unfiltered) return;
+    final c = Api.cached('get_activity', body: activityFirstPage);
+    if (c == null) return;
+    _events
+      ..clear()
+      ..addAll((c['events'] as List).map((e) => Map<String, dynamic>.from(e)));
+    _next = c['next_before_id'] as int?;
+  }
+
+  /// Filters changed: start again from the first page. The list under the old
+  /// filters is not left on screen (under the new chips) while the new one loads.
+  void _refilter() {
+    setState(() {
+      _events.clear();
+      _next = null;
+      _error = null;
+      _showSaved();
+    });
+    _load(reset: true);
+  }
+
   Future<void> _load({bool reset = false}) async {
     _seenVersion = AppState.i.version;
-    if (_loading) return;
+    // "Load more" waits for the page on its way; a new first page replaces it.
+    if (_loading && !reset) return;
+    final req = ++_request;
+    final body = <String, dynamic>{
+      if (_selected.isNotEmpty) 'types': _selected.toList(),
+      if (_actor != null) 'actor': _actor,
+      if (_range != null) 'from': ymd(_range!.start),
+      if (_range != null) 'to': ymd(_range!.end),
+      if (_search.isNotEmpty) 'search': _search,
+      if (!reset && _next != null) 'before_id': _next,
+      'limit': activityFirstPage['limit'],
+    };
     setState(() => _loading = true);
     try {
-      final r = await Api.call('get_activity', {
-        if (_selected.isNotEmpty) 'types': _selected.toList(),
-        if (_actor != null) 'actor': _actor,
-        if (_range != null) 'from': ymd(_range!.start),
-        if (_range != null) 'to': ymd(_range!.end),
-        if (_search.isNotEmpty) 'search': _search,
-        if (!reset && _next != null) 'before_id': _next,
-        'limit': 50,
-      });
-      if (!mounted) return;
+      // Only the first page without filters is saved for next time.
+      final r = reset && _unfiltered
+          ? await Api.read('get_activity', body: body)
+          : await Api.call('get_activity', body);
+      if (!mounted || req != _request) return;
       setState(() {
         if (reset) _events.clear();
         _events.addAll((r['events'] as List).map((e) => Map<String, dynamic>.from(e)));
@@ -119,9 +156,9 @@ class _ActivityTabState extends State<ActivityTab> with AutomaticKeepAliveClient
         _error = null;
       });
     } catch (e) {
-      if (mounted) setState(() => _error = e);
+      if (mounted && req == _request) setState(() => _error = e);
     }
-    if (mounted) setState(() => _loading = false);
+    if (mounted && req == _request) setState(() => _loading = false);
   }
 
   @override
@@ -148,14 +185,14 @@ class _ActivityTabState extends State<ActivityTab> with AutomaticKeepAliveClient
                   initialDateRange: _range,
                 );
                 setState(() => _range = r);
-                _load(reset: true);
+                _refilter();
               },
             ),
           ),
           textInputAction: TextInputAction.search,
           onSubmitted: (v) {
             _search = v.trim();
-            _load(reset: true);
+            _refilter();
           },
         ),
       ),
@@ -171,7 +208,7 @@ class _ActivityTabState extends State<ActivityTab> with AutomaticKeepAliveClient
                 selected: _selected.contains(e.key),
                 onSelected: (v) {
                   setState(() => v ? _selected.add(e.key) : _selected.remove(e.key));
-                  _load(reset: true);
+                  _refilter();
                 },
               ),
             ),
@@ -184,7 +221,7 @@ class _ActivityTabState extends State<ActivityTab> with AutomaticKeepAliveClient
                 selected: _actor == a,
                 onSelected: (v) {
                   setState(() => _actor = v ? a : null);
-                  _load(reset: true);
+                  _refilter();
                 },
               ),
             ),
@@ -197,11 +234,12 @@ class _ActivityTabState extends State<ActivityTab> with AutomaticKeepAliveClient
             label: Text('${shortDate(ymd(_range!.start))} – ${shortDate(ymd(_range!.end))}'),
             onDeleted: () {
               setState(() => _range = null);
-              _load(reset: true);
+              _refilter();
             },
           ),
         ),
       if (_loading && _events.isEmpty) const LinearProgressIndicator(),
+      if (_error != null && _events.isNotEmpty) StaleNote(error: _error!, onRetry: () => _load(reset: true)),
       Expanded(
         child: _error != null && _events.isEmpty
             ? ErrorRetry(error: _error!, onRetry: () => _load(reset: true))
@@ -346,9 +384,12 @@ class PaymentsTab extends StatefulWidget {
 }
 
 class _PaymentsTabState extends State<PaymentsTab> with AutomaticKeepAliveClientMixin {
-  List<Map<String, dynamic>>? _months;
+  List<Map<String, dynamic>>? _months = _parse(Api.cached('list_months'));
   Object? _error;
   int _seenVersion = -1;
+
+  static List<Map<String, dynamic>>? _parse(Map<String, dynamic>? r) =>
+      r == null ? null : (r['months'] as List).map((e) => Map<String, dynamic>.from(e)).toList();
 
   @override
   bool get wantKeepAlive => true;
@@ -373,10 +414,10 @@ class _PaymentsTabState extends State<PaymentsTab> with AutomaticKeepAliveClient
   Future<void> _load() async {
     _seenVersion = AppState.i.version;
     try {
-      final r = await Api.call('list_months');
+      final r = await Api.read('list_months');
       if (mounted) {
         setState(() {
-          _months = (r['months'] as List).map((e) => Map<String, dynamic>.from(e)).toList();
+          _months = _parse(r);
           _error = null;
         });
       }
@@ -394,6 +435,7 @@ class _PaymentsTabState extends State<PaymentsTab> with AutomaticKeepAliveClient
     return RefreshIndicator(
       onRefresh: _load,
       child: ListView(padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.paddingOf(context).bottom), children: [
+        if (_error != null) StaleNote(error: _error!, onRetry: _load),
         for (final (i, m) in _months!.indexed)
           EntryAnimation(index: i, child: Card(
             margin: const EdgeInsets.only(bottom: 8),
@@ -442,29 +484,50 @@ class _MenuHistoryTabState extends State<MenuHistoryTab> with AutomaticKeepAlive
   int _daysBack = 60;
   Map<String, dynamic>? _d;
   Object? _error;
+  int _seenVersion = -1;
+  int _request = 0;
 
   @override
   bool get wantKeepAlive => true;
 
+  /// Saved per period length ("last 60 days"), so yesterday's copy still shows today.
+  String get _key => 'last$_daysBack';
+
   @override
   void initState() {
     super.initState();
+    _d = Api.cached('get_menu_history', key: _key);
+    AppState.i.addListener(_onState);
     _load();
   }
 
+  @override
+  void dispose() {
+    AppState.i.removeListener(_onState);
+    super.dispose();
+  }
+
+  void _onState() {
+    if (AppState.i.version != _seenVersion) _load();
+  }
+
   Future<void> _load() async {
+    _seenVersion = AppState.i.version;
+    final req = ++_request;
     final t = istToday();
     try {
-      final r = await Api.call('get_menu_history', {
+      final r = await Api.read('get_menu_history', key: _key, body: {
         'from': ymd(t.subtract(Duration(days: _daysBack))),
         'to': ymd(t),
       });
-      if (mounted) setState(() {
-        _d = r;
-        _error = null;
-      });
+      if (mounted && req == _request) {
+        setState(() {
+          _d = r;
+          _error = null;
+        });
+      }
     } catch (e) {
-      if (mounted) setState(() => _error = e);
+      if (mounted && req == _request) setState(() => _error = e);
     }
   }
 
@@ -480,6 +543,7 @@ class _MenuHistoryTabState extends State<MenuHistoryTab> with AutomaticKeepAlive
     return RefreshIndicator(
       onRefresh: _load,
       child: ListView(padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.paddingOf(context).bottom), children: [
+        if (_error != null) StaleNote(error: _error!, onRetry: _load),
         if (top.isNotEmpty)
           SectionCard(
             title: 'Most cooked dishes',

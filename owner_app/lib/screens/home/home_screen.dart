@@ -8,6 +8,7 @@ import '../../widgets/common.dart';
 import '../../widgets/glass.dart';
 import '../../widgets/motion.dart';
 import '../../widgets/week_timeline.dart';
+import '../history/history_screen.dart';
 import '../holidays/holidays_screen.dart';
 import '../leave/leave_screen.dart';
 import '../qr_views.dart';
@@ -22,9 +23,17 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  Map<String, dynamic>? _d;
+  // Last saved dashboard: shown at once, then refreshed in the background.
+  Map<String, dynamic>? _d = Api.cached('get_dashboard');
   Object? _error;
   int _seenVersion = -1;
+
+  /// [_d] came from the server in this session (not only the saved copy), so
+  /// the salary due can be acted on.
+  bool _fresh = false;
+
+  /// When the other tabs' data was last fetched ahead of time.
+  static DateTime? _prefetchedAt;
 
   @override
   void initState() {
@@ -46,14 +55,34 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _load() async {
     _seenVersion = AppState.i.version;
     try {
-      final d = await Api.call('get_dashboard');
+      final d = await Api.read('get_dashboard');
       if (mounted) setState(() {
         _d = d;
         _error = null;
+        _fresh = true;
       });
+      _prefetch();
     } catch (e) {
       if (mounted) setState(() => _error = e);
     }
+  }
+
+  /// Fetches what the other tabs show first, in the background, so they open
+  /// instantly. At most every 10 minutes (e.g. again when the app comes back
+  /// the next day); failures are ignored.
+  void _prefetch() {
+    final now = DateTime.now();
+    if (_prefetchedAt != null && now.difference(_prefetchedAt!) < const Duration(minutes: 10)) return;
+    _prefetchedAt = now;
+    final today = istToday();
+    Api.prefetch([
+      ('get_month_summary', {'month': ym(today)}),
+      ('get_menu', {'date': ymd(today)}),
+      ('get_menu', {'date': ymd(today.add(const Duration(days: 1)))}),
+      ('list_months', {}),
+      ('get_activity', activityFirstPage),
+      ('list_leave', {}),
+    ]);
   }
 
   Future<void> _markPaid(Map due) async {
@@ -88,7 +117,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final cook = d['cook'] as Map?;
 
     final sections = <Widget>[
-      if (due != null) _DueBanner(due: due, onPaid: () => _markPaid(due)),
+      // "Mark as paid" waits for the server's figure: the saved one may be out of date.
+      if (due != null) _DueBanner(due: due, onPaid: _fresh ? () => _markPaid(due) : null),
       if (cook == null)
         SectionCard(
           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PairScreen())),
@@ -142,7 +172,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ]),
     ];
 
-    return RefreshIndicator(
+    final list = RefreshIndicator(
       onRefresh: _load,
       child: ListView.separated(
         // Bottom padding keeps the last card clear of the floating tab bar.
@@ -152,13 +182,19 @@ class _HomeScreenState extends State<HomeScreen> {
         itemBuilder: (_, i) => EntryAnimation(index: i, child: sections[i]),
       ),
     );
+    // The note sits outside the list so it does not shift the cards' slots
+    // (which would rebuild the week timeline and fetch it again).
+    return Column(children: [
+      if (_error != null) StaleNote(error: _error!, onRetry: _load),
+      Expanded(child: list),
+    ]);
   }
 }
 
 class _DueBanner extends StatelessWidget {
   const _DueBanner({required this.due, required this.onPaid});
   final Map due;
-  final VoidCallback onPaid;
+  final VoidCallback? onPaid;
 
   @override
   Widget build(BuildContext context) {

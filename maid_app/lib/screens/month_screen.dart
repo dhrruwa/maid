@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:printing/printing.dart';
 
 import '../core/api.dart';
+import '../core/cached_load.dart';
 import '../core/i18n.dart';
 import '../core/theme.dart';
 import '../widgets/common.dart';
@@ -18,9 +19,7 @@ class MonthScreen extends StatefulWidget {
   State<MonthScreen> createState() => _MonthScreenState();
 }
 
-class _MonthScreenState extends State<MonthScreen> {
-  Map<String, dynamic>? _s;
-  String? _error;
+class _MonthScreenState extends State<MonthScreen> with CachedLoad {
   bool _slipBusy = false;
 
   @override
@@ -29,14 +28,7 @@ class _MonthScreenState extends State<MonthScreen> {
     _load();
   }
 
-  Future<void> _load() async {
-    try {
-      final r = await Api.call('get_month_summary', {'month': widget.month});
-      if (mounted) setState(() => _s = Map<String, dynamic>.from(r['summary']));
-    } on ApiError catch (e) {
-      if (mounted) setState(() => _error = e.friendly);
-    }
-  }
+  Future<void> _load() => load('get_month_summary', {'month': widget.month});
 
   Future<Uint8List> _pdf() async {
     final r = await Api.call('generate_slip', {'month': widget.month});
@@ -69,14 +61,14 @@ class _MonthScreenState extends State<MonthScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(L.monthYear(widget.month))),
-      body: _s == null
-          ? (_error != null ? ErrorBox(text: _error!, onRetry: _load) : const Center(child: CircularProgressIndicator()))
-          : _body(),
+      body: data == null
+          ? (error != null ? ErrorBox(text: error!, onRetry: _load) : const Center(child: CircularProgressIndicator()))
+          : RefreshIndicator(onRefresh: _load, child: _body()),
     );
   }
 
   Widget _body() {
-    final s = _s!;
+    final s = Map<String, dynamic>.from(data!['summary']);
     final t = s['totals'] as Map;
     final c = s['counts'] as Map;
     final p = s['payment'] as Map?;
@@ -99,6 +91,7 @@ class _MonthScreenState extends State<MonthScreen> {
     }
 
     return ListView(padding: const EdgeInsets.all(16), children: [
+      if (stale) const SavedNote(),
       Card(
         child: Padding(
           padding: const EdgeInsets.all(18),

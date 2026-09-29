@@ -126,6 +126,28 @@ class ErrorBox extends StatelessWidget {
   }
 }
 
+/// Shown above saved data when a refresh failed ("showing saved information").
+class SavedNote extends StatelessWidget {
+  const SavedNote({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: StatusColors.grey.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(children: [
+        const Icon(Icons.wifi_off_rounded, color: StatusColors.grey, size: 24),
+        const SizedBox(width: 10),
+        Expanded(child: Text(L.t('showing_saved'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600))),
+      ]),
+    );
+  }
+}
+
 void showMsg(BuildContext context, String msg, {bool error = false}) {
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
     behavior: SnackBarBehavior.floating,

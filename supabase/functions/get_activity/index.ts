@@ -181,7 +181,13 @@ handle(async (body) => {
     q = q.or(ors.join(","));
   }
 
-  const rows = must(await q.order("id", { ascending: false }).limit(limit)) as Row[];
+  // The house's dish names load alongside the log (one round trip instead of
+  // two); any referenced dish not found there is still looked up by id below.
+  const [logRes, houseDishes] = await Promise.all([
+    q.order("id", { ascending: false }).limit(limit),
+    sb.from("dishes").select("id,name").eq("house_id", house.id),
+  ]);
+  const rows = must(logRes) as Row[];
 
   // Hide noisy internal rows (FCM token refreshes, pairing token bookkeeping).
   const visible = rows.filter((r) => {
@@ -203,8 +209,16 @@ handle(async (body) => {
   }
   const dishNames = new Map<string, string>();
   if (ids.size) {
-    for (const d of must(await sb.from("dishes").select("id,name").in("id", [...ids])) as { id: string; name: string }[]) {
-      dishNames.set(d.id, d.name);
+    const known = new Map<string, string>();
+    if (!houseDishes.error) {
+      for (const d of houseDishes.data as { id: string; name: string }[]) known.set(d.id, d.name);
+    }
+    const missing = [...ids].filter((id) => !known.has(id));
+    for (const id of ids) if (known.has(id)) dishNames.set(id, known.get(id)!);
+    if (missing.length) {
+      for (const d of must(await sb.from("dishes").select("id,name").in("id", missing)) as { id: string; name: string }[]) {
+        dishNames.set(d.id, d.name);
+      }
     }
   }
 

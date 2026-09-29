@@ -6,7 +6,7 @@ class AppConfig {
   /// Supabase → Project Settings → API → Project URL
   static const supabaseUrl = String.fromEnvironment(
     'SUPABASE_URL',
-    defaultValue: 'https://rvxhrmyeefdchdlwqkht.supabase.co',
+    defaultValue: 'https://sbyespnawbknbnlbrmht.supabase.co',
   );
 
   /// Supabase → Project Settings → API Keys → "anon public" (or "publishable") key
@@ -14,6 +14,11 @@ class AppConfig {
     'SUPABASE_ANON_KEY',
     defaultValue: 'PASTE_YOUR_SUPABASE_ANON_KEY_HERE',
   );
+
+  /// Region the Edge Functions run in. Keep it the same as the database's region
+  /// (Supabase → Project Settings → General) so each query stays in one data centre
+  /// instead of crossing the globe. 'any' or empty lets Supabase pick the nearest edge.
+  static const functionRegion = String.fromEnvironment('FUNCTION_REGION', defaultValue: 'ap-south-1');
 
   /// Firebase console → Project settings → General → Your apps → Android app
   /// (values are also inside google-services.json). Leave empty to run

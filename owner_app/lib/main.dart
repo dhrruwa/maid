@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config.dart';
+import 'core/api.dart';
 import 'core/app_state.dart';
 import 'core/device.dart';
 import 'core/push.dart';
@@ -9,6 +10,7 @@ import 'core/theme.dart';
 import 'screens/lock_screen.dart';
 import 'screens/setup/setup_flow.dart';
 import 'screens/shell.dart';
+import 'widgets/week_timeline.dart';
 
 final messengerKey = GlobalKey<ScaffoldMessengerState>();
 
@@ -69,6 +71,12 @@ class _RootState extends State<Root> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // Fetch Home's data while the PIN is typed: Home joins these requests (or
+    // finds their saved replies), so it is up to date the moment it opens.
+    if (Device.setupDone) {
+      Api.prefetch([('get_dashboard', {})]);
+      WeekTimeline.fetch().ignore();
+    }
   }
 
   @override

@@ -57,8 +57,20 @@ function deviceId(body: Body): string {
   return id;
 }
 
-async function loadSettings(sb: SupabaseClient, houseId: string): Promise<Settings> {
-  return must(await sb.from("settings").select("*").eq("house_id", houseId).single()) as Settings;
+// deno-lint-ignore no-explicit-any
+type Row = Record<string, any>;
+
+/** An embedded one-to-one row comes back as an object (or a 1-element array on older PostgREST). */
+function one<T>(v: unknown): T | null {
+  if (Array.isArray(v)) return (v[0] ?? null) as T | null;
+  return (v ?? null) as T | null;
+}
+
+/** Same guarantee as the old `.single()` settings lookup: every house has a settings row. */
+function requireSettings(v: unknown): Settings {
+  const s = one<Settings>(v);
+  if (!s) throw new Error("JSON object requested, multiple (or no) rows returned");
+  return s;
 }
 
 export async function activeCook(sb: SupabaseClient, houseId: string): Promise<CookDevice | null> {
@@ -68,36 +80,63 @@ export async function activeCook(sb: SupabaseClient, houseId: string): Promise<C
   ) as CookDevice | null;
 }
 
+/**
+ * Owner phone. One round trip: the house row with its settings and the
+ * newest active maid phone embedded.
+ */
 export async function ownerCtx(body: Body): Promise<Ctx> {
   const id = deviceId(body);
   const sb = db("owner");
-  const house = must(
-    await sb.from("house").select("*").eq("owner_device_id", id).maybeSingle(),
-  ) as House | null;
-  if (!house) throw new AppError("NOT_OWNER", "This phone is not the owner phone", {}, 401);
-  return { role: "owner", sb, house, settings: await loadSettings(sb, house.id), cook: await activeCook(sb, house.id) };
+  const row = must(
+    await sb.from("house").select("*, settings(*), cook_device(*)")
+      .eq("owner_device_id", id)
+      .eq("cook_device.active", true)
+      .order("paired_at", { ascending: false, referencedTable: "cook_device" })
+      .limit(1, { referencedTable: "cook_device" })
+      .maybeSingle(),
+  ) as Row | null;
+  if (!row) throw new AppError("NOT_OWNER", "This phone is not the owner phone", {}, 401);
+  const { settings, cook_device, ...house } = row;
+  return {
+    role: "owner",
+    sb,
+    house: house as House,
+    settings: requireSettings(settings),
+    cook: one<CookDevice>(cook_device),
+  };
 }
 
+/**
+ * Maid phone. One round trip: the active cook_device row with its house and
+ * the house settings embedded.
+ */
 export async function maidCtx(body: Body): Promise<Ctx> {
   const id = deviceId(body);
   const sb = db("maid");
-  const cook = must(
-    await sb.from("cook_device").select("*").eq("device_id", id).eq("active", true)
+  const row = must(
+    await sb.from("cook_device").select("*, house(*, settings(*))").eq("device_id", id).eq("active", true)
       .order("paired_at", { ascending: false }).limit(1).maybeSingle(),
-  ) as CookDevice | null;
-  if (!cook) throw new AppError("NOT_PAIRED", "This phone is not paired", {}, 401);
-  const house = must(await sb.from("house").select("*").eq("id", cook.house_id).single()) as House;
-  return { role: "maid", sb, house, settings: await loadSettings(sb, house.id), cook };
+  ) as Row | null;
+  if (!row) throw new AppError("NOT_PAIRED", "This phone is not paired", {}, 401);
+  const { house: houseRow, ...cook } = row;
+  const h = one<Row>(houseRow);
+  if (!h) throw new Error("JSON object requested, multiple (or no) rows returned");
+  const { settings, ...house } = h;
+  return { role: "maid", sb, house: house as House, settings: requireSettings(settings), cook: cook as CookDevice };
 }
 
-/** Either the owner phone or the paired maid phone. */
+/**
+ * Either the owner phone or the paired maid phone. Both lookups run in
+ * parallel; the owner wins, exactly as the old owner-then-maid order did.
+ */
 export async function anyCtx(body: Body): Promise<Ctx> {
-  try {
-    return await ownerCtx(body);
-  } catch (e) {
-    if (e instanceof AppError && e.code === "NOT_OWNER") return await maidCtx(body);
-    throw e;
-  }
+  deviceId(body);
+  const [owner, maid] = await Promise.allSettled([ownerCtx(body), maidCtx(body)]);
+  if (owner.status === "fulfilled") return owner.value;
+  const e = owner.reason;
+  if (!(e instanceof AppError && e.code === "NOT_OWNER")) throw e;
+  if (maid.status === "fulfilled") return maid.value;
+  throw maid.reason;
 }
 
 export function actorOf(ctx: Ctx): Actor {

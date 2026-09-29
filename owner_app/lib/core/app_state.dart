@@ -37,6 +37,7 @@ class AppState extends ChangeNotifier {
   Future<void> refresh() async => apply(await Api.call('get_house'));
 
   void changed() {
+    Api.invalidate();
     version++;
     notifyListeners();
   }

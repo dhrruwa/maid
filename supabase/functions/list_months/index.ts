@@ -11,15 +11,20 @@ handle(async (body) => {
   const current = now.date.slice(0, 7);
   const start = toIst(new Date(ctx.house.created_at)).date.slice(0, 7);
 
-  const snaps = must(
-    await ctx.sb.from("monthly_snapshots").select("month,slip_url").eq("house_id", ctx.house.id),
-  ) as { month: string; slip_url: string | null }[];
-
   const months: string[] = [];
   for (let m = start; m <= current; m = nextMonth(m)) months.push(m);
 
-  const rows = await Promise.all(months.map(async (month) => {
-    const s = await computeMonth(ctx, month, { now });
+  // Slip list and every month's summary load in one parallel batch.
+  const [snapsRes, summaries] = await Promise.all([
+    ctx.sb.from("monthly_snapshots").select("month,slip_url").eq("house_id", ctx.house.id),
+    Promise.allSettled(months.map((month) => computeMonth(ctx, month, { now }))),
+  ]);
+  const snaps = must(snapsRes) as { month: string; slip_url: string | null }[];
+
+  const rows = months.map((month, i) => {
+    const r = summaries[i];
+    if (r.status === "rejected") throw r.reason;
+    const s = r.value;
     return {
       month,
       visits: s.counts.visits_done,
@@ -31,6 +36,6 @@ handle(async (body) => {
       has_slip: !!snaps.find((x) => x.month === month)?.slip_url,
       is_current: month === current,
     };
-  }));
+  });
   return { months: rows.reverse() };
 });

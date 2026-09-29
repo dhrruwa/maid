@@ -41,6 +41,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool _fromCache = false;
   int _loads = 0;
   bool _loading = false;
+  bool _reloadQueued = false;
   String? _error;
   int? _bump;
   late int _tab = istNow().hour >= 21 ? 1 : 0; // after 9 PM show tomorrow
@@ -86,8 +87,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _load() async {
-    if (_loading) return;
+    if (_loading) {
+      // e.g. a scan finished while an older load was on its way: that load
+      // can't have the new scan, so load once more when it's done.
+      _reloadQueued = true;
+      return;
+    }
     _loading = true;
+    _reloadQueued = false;
     try {
       final res = await Future.wait([
         Api.call('get_live_salary'),
@@ -110,6 +117,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         _bump = bump;
       });
       Device.prefs.setString('home_cache', jsonEncode({'salary': salary, 'today': res[1], 'tomorrow': res[2]}));
+      _prefetch();
     } on ApiError catch (e) {
       if (e.code == 'NOT_PAIRED' && mounted) {
         Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const PairingScreen()), (_) => false);
@@ -118,7 +126,20 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       if (mounted) setState(() => _error = e.friendly);
     } finally {
       _loading = false;
+      if (_reloadQueued && mounted && Device.paired) _load();
     }
+  }
+
+  static bool _prefetched = false;
+
+  /// Once per app start, after Home has loaded: fetch (and save) what the other
+  /// screens need so they open instantly. Failures don't matter here.
+  void _prefetch() {
+    if (_prefetched) return;
+    _prefetched = true;
+    Api.fetch('list_months').ignore();
+    Api.fetch('list_leave').ignore();
+    Api.fetch('get_timeline', WeekTimeline.request()).ignore();
   }
 
   void _showUploads(List<UploadResult> results) {

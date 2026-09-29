@@ -181,19 +181,15 @@ export async function computeMonth(
 ): Promise<MonthSummary> {
   const { sb, house, settings } = ctx;
 
-  if (!opts.ignoreSnapshot) {
-    const snap = must(
-      await sb.from("monthly_snapshots").select("summary")
-        .eq("house_id", house.id).eq("month", month).maybeSingle(),
-    ) as { summary: MonthSummary } | null;
-    if (snap) return { ...snap.summary, frozen: true };
-  }
-
   const now = opts.now ?? nowIst();
   const { first, last, days } = monthBounds(month);
   const startDate = toIst(new Date(house.created_at)).date;
 
-  const [att, hol, lv, pay, menus, firstPair] = await Promise.all([
+  // The frozen-snapshot lookup runs in the same parallel batch as the live
+  // queries (one round trip instead of two); a snapshot, if present, wins.
+  const [snapRes, att, hol, lv, pay, menuRes, firstPair] = await Promise.all([
+    opts.ignoreSnapshot ? null : sb.from("monthly_snapshots").select("summary")
+      .eq("house_id", house.id).eq("month", month).maybeSingle(),
     sb.from("attendance").select("*").eq("house_id", house.id).is("deleted_at", null)
       .gte("date", first).lte("date", last),
     sb.from("holidays").select("id,date,slot,paid,note").eq("house_id", house.id)
@@ -203,10 +199,20 @@ export async function computeMonth(
       .order("date"),
     sb.from("payments").select("paid_on,total_amount").eq("house_id", house.id)
       .eq("month", month).maybeSingle(),
-    menuFor(sb, house.id, first, last),
+    // Settled, so a menu error cannot hide a frozen snapshot (it is rethrown below).
+    menuFor(sb, house.id, first, last).then(
+      (m) => ({ m, err: null as unknown }),
+      (err) => ({ m: null, err: err as unknown }),
+    ),
     sb.from("cook_device").select("paired_at").eq("house_id", house.id)
       .order("paired_at", { ascending: true }).limit(1).maybeSingle(),
   ]);
+  if (snapRes) {
+    const snap = must(snapRes) as { summary: MonthSummary } | null;
+    if (snap) return { ...snap.summary, frozen: true };
+  }
+  if (menuRes.err) throw menuRes.err;
+  const menus = menuRes.m!;
   const attendance = must(att) as Record<string, unknown>[];
   // Missed visits only count once the maid phone was first paired, so the
   // setup day (or days before pairing) never show up as "missed".
@@ -398,12 +404,13 @@ export async function computeMonth(
 export async function liveSalary(ctx: Ctx) {
   const now = nowIst();
   const month = now.date.slice(0, 7);
-  const s = await computeMonth(ctx, month, { now, ignoreSnapshot: true });
-  const payday = `${nextMonth(month)}-01`;
-  const lastPayment = must(
-    await ctx.sb.from("payments").select("month,total_amount,paid_on")
+  const [s, lastRes] = await Promise.all([
+    computeMonth(ctx, month, { now, ignoreSnapshot: true }),
+    ctx.sb.from("payments").select("month,total_amount,paid_on")
       .eq("house_id", ctx.house.id).order("month", { ascending: false }).limit(1).maybeSingle(),
-  );
+  ]);
+  const payday = `${nextMonth(month)}-01`;
+  const lastPayment = must(lastRes);
   return {
     month,
     from: `${month}-01`,

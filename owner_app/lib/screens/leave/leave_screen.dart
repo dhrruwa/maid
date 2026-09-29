@@ -92,21 +92,37 @@ class LeaveScreen extends StatefulWidget {
 }
 
 class _LeaveScreenState extends State<LeaveScreen> {
-  List<Map<String, dynamic>>? _leaves;
+  List<Map<String, dynamic>>? _leaves = _parse(Api.cached('list_leave'));
   Object? _error;
+  int _seenVersion = -1;
+
+  static List<Map<String, dynamic>>? _parse(Map<String, dynamic>? r) =>
+      r == null ? null : (r['leaves'] as List).map((e) => Map<String, dynamic>.from(e)).toList();
 
   @override
   void initState() {
     super.initState();
+    AppState.i.addListener(_onState);
     _load();
   }
 
+  @override
+  void dispose() {
+    AppState.i.removeListener(_onState);
+    super.dispose();
+  }
+
+  void _onState() {
+    if (AppState.i.version != _seenVersion) _load();
+  }
+
   Future<void> _load() async {
+    _seenVersion = AppState.i.version;
     try {
-      final r = await Api.call('list_leave');
+      final r = await Api.read('list_leave');
       if (mounted) {
         setState(() {
-          _leaves = (r['leaves'] as List).map((e) => Map<String, dynamic>.from(e)).toList();
+          _leaves = _parse(r);
           _error = null;
         });
       }
@@ -118,10 +134,8 @@ class _LeaveScreenState extends State<LeaveScreen> {
   Future<void> _decide(Map l, String decision) async {
     final r = await busy(context, () => Api.call('decide_leave', {'id': l['id'], 'decision': decision}),
         success: 'Saved – the cook has been notified');
-    if (r != null) {
-      AppState.i.changed();
-      _load();
-    }
+    // Reloads this list (and the other screens) through the AppState listener.
+    if (r != null) AppState.i.changed();
   }
 
   @override
@@ -137,6 +151,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
       body = RefreshIndicator(
         onRefresh: _load,
         child: ListView(padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.paddingOf(context).bottom), children: [
+          if (_error != null) StaleNote(error: _error!, onRetry: _load),
           if (pending.isNotEmpty)
             SectionCard(
               title: 'Waiting for you',

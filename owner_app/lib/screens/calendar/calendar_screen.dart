@@ -20,8 +20,12 @@ class CalendarScreen extends StatefulWidget {
 class _CalendarScreenState extends State<CalendarScreen> {
   DateTime _focused = istToday();
   final Map<String, Map<String, dynamic>> _months = {};
-  Object? _error;
-  bool _loading = false;
+
+  /// Months fetched from the server since data last changed; the others show
+  /// their saved copy (if any) and are refreshed when shown.
+  final Set<String> _fresh = {};
+  final Map<String, Object> _errors = {};
+  final Set<String> _loading = {};
   int _seenVersion = -1;
 
   @override
@@ -39,7 +43,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   void _onState() {
     if (AppState.i.version != _seenVersion) {
-      _months.clear();
+      // Keep showing the current colours while they refresh.
+      _fresh.clear();
       _load();
     }
   }
@@ -49,15 +54,20 @@ class _CalendarScreenState extends State<CalendarScreen> {
   Future<void> _load() async {
     _seenVersion = AppState.i.version;
     final m = _month;
-    setState(() => _loading = true);
-    try {
-      final r = await Api.call('get_month_summary', {'month': m});
-      _months[m] = Map<String, dynamic>.from(r['summary']);
-      _error = null;
-    } catch (e) {
-      _error = e;
+    if (!_months.containsKey(m)) {
+      final c = Api.cached('get_month_summary', body: {'month': m});
+      if (c != null) _months[m] = Map<String, dynamic>.from(c['summary']);
     }
-    if (mounted) setState(() => _loading = false);
+    setState(() => _loading.add(m));
+    try {
+      final r = await Api.read('get_month_summary', body: {'month': m});
+      _months[m] = Map<String, dynamic>.from(r['summary']);
+      _fresh.add(m);
+      _errors.remove(m);
+    } catch (e) {
+      _errors[m] = e;
+    }
+    if (mounted) setState(() => _loading.remove(m));
   }
 
   Map<String, dynamic>? _day(DateTime d) {
@@ -103,12 +113,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
   @override
   Widget build(BuildContext context) {
     final s = _months[_month];
+    final error = _errors[_month];
     final today = istToday();
     return RefreshIndicator(
-      onRefresh: () async {
-        _months.remove(_month);
-        await _load();
-      },
+      onRefresh: _load,
       child: ListView(padding: EdgeInsets.fromLTRB(12, 0, 12, 24 + MediaQuery.paddingOf(context).bottom), children: [
         Card(
           child: Padding(
@@ -124,7 +132,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               rowHeight: 48,
               onPageChanged: (d) {
                 setState(() => _focused = d);
-                if (!_months.containsKey(ym(d))) _load();
+                if (!_fresh.contains(ym(d))) _load();
               },
               onDaySelected: (d, focused) {
                 final info = _day(d);
@@ -140,8 +148,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
             ),
           ),
         ),
-        if (_loading) const LinearProgressIndicator(),
-        if (_error != null && s == null) ErrorRetry(error: _error!, onRetry: _load),
+        if (_loading.contains(_month) && s == null) const LinearProgressIndicator(),
+        if (error != null && s == null) ErrorRetry(error: error, onRetry: _load),
+        if (error != null && s != null) StaleNote(error: error, onRetry: _load),
         const SizedBox(height: 12),
         const _Legend(),
         const SizedBox(height: 12),

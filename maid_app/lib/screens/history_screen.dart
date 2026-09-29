@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../core/api.dart';
+import '../core/cached_load.dart';
 import '../core/i18n.dart';
 import '../core/theme.dart';
 import '../widgets/common.dart';
@@ -37,39 +37,27 @@ class _Months extends StatefulWidget {
   State<_Months> createState() => _MonthsState();
 }
 
-class _MonthsState extends State<_Months> {
-  List<Map<String, dynamic>>? _months;
-  String? _error;
-
+class _MonthsState extends State<_Months> with CachedLoad {
   @override
   void initState() {
     super.initState();
     _load();
   }
 
-  Future<void> _load() async {
-    try {
-      final r = await Api.call('list_months');
-      if (mounted) {
-        setState(() {
-          _months = (r['months'] as List).map((e) => Map<String, dynamic>.from(e)).toList();
-          _error = null;
-        });
-      }
-    } on ApiError catch (e) {
-      if (mounted) setState(() => _error = e.friendly);
-    }
-  }
+  Future<void> _load() => load('list_months');
 
   @override
   Widget build(BuildContext context) {
-    if (_months == null) {
-      return _error != null ? ErrorBox(text: _error!, onRetry: _load) : const Center(child: CircularProgressIndicator());
+    final d = data;
+    if (d == null) {
+      return error != null ? ErrorBox(text: error!, onRetry: _load) : const Center(child: CircularProgressIndicator());
     }
+    final months = (d['months'] as List).map((e) => Map<String, dynamic>.from(e));
     return RefreshIndicator(
       onRefresh: _load,
       child: ListView(padding: const EdgeInsets.all(16), children: [
-        for (final m in _months!)
+        if (stale) const SavedNote(),
+        for (final m in months)
           Card(
             margin: const EdgeInsets.only(bottom: 10),
             child: InkWell(
@@ -129,10 +117,8 @@ class _PastMenus extends StatefulWidget {
   State<_PastMenus> createState() => _PastMenusState();
 }
 
-class _PastMenusState extends State<_PastMenus> {
+class _PastMenusState extends State<_PastMenus> with CachedLoad {
   DateTime _date = DateTime.parse(istDate(-1));
-  Map<String, dynamic>? _menu;
-  String? _error;
 
   @override
   void initState() {
@@ -140,18 +126,7 @@ class _PastMenusState extends State<_PastMenus> {
     _load();
   }
 
-  Future<void> _load() async {
-    setState(() {
-      _menu = null;
-      _error = null;
-    });
-    try {
-      final r = await Api.call('get_menu', {'date': ymd(_date)});
-      if (mounted) setState(() => _menu = r);
-    } on ApiError catch (e) {
-      if (mounted) setState(() => _error = e.friendly);
-    }
-  }
+  Future<void> _load() => load('get_menu', {'date': ymd(_date)});
 
   Future<void> _pick() async {
     final today = DateTime.parse(istDate());
@@ -164,14 +139,14 @@ class _PastMenusState extends State<_PastMenus> {
     );
     if (d != null) {
       _date = d;
-      _load();
+      _load(); // shows that day's saved menu at once, if any
     }
   }
 
   @override
   Widget build(BuildContext context) {
     Widget slot(String s) {
-      final items = (_menu?[s]?['items'] as List?) ?? [];
+      final items = (data?[s]?['items'] as List?) ?? [];
       return Card(
         margin: const EdgeInsets.only(bottom: 12),
         child: Padding(
@@ -199,11 +174,12 @@ class _PastMenusState extends State<_PastMenus> {
     return ListView(padding: const EdgeInsets.all(16), children: [
       BigButton(icon: Icons.calendar_month_rounded, label: L.longDate(ymd(_date)), filled: false, onPressed: _pick),
       const SizedBox(height: 16),
-      if (_error != null)
-        ErrorBox(text: _error!, onRetry: _load)
-      else if (_menu == null)
+      if (data == null && error != null)
+        ErrorBox(text: error!, onRetry: _load)
+      else if (data == null)
         const Center(child: CircularProgressIndicator())
       else ...[
+        if (stale) const SavedNote(),
         slot('morning'),
         slot('evening'),
       ],
@@ -218,34 +194,30 @@ class _Leaves extends StatefulWidget {
   State<_Leaves> createState() => _LeavesState();
 }
 
-class _LeavesState extends State<_Leaves> {
-  List<Map<String, dynamic>>? _list;
-  String? _error;
-
+class _LeavesState extends State<_Leaves> with CachedLoad {
   @override
   void initState() {
     super.initState();
     _load();
   }
 
-  Future<void> _load() async {
-    try {
-      final r = await Api.call('list_leave');
-      if (mounted) setState(() => _list = (r['leaves'] as List).map((e) => Map<String, dynamic>.from(e)).toList());
-    } on ApiError catch (e) {
-      if (mounted) setState(() => _error = e.friendly);
-    }
-  }
+  Future<void> _load() => load('list_leave');
 
   @override
   Widget build(BuildContext context) {
-    if (_list == null) {
-      return _error != null ? ErrorBox(text: _error!, onRetry: _load) : const Center(child: CircularProgressIndicator());
+    final d = data;
+    if (d == null) {
+      return error != null ? ErrorBox(text: error!, onRetry: _load) : const Center(child: CircularProgressIndicator());
     }
-    if (_list!.isEmpty) return Center(child: Text(L.t('no_requests'), style: const TextStyle(fontSize: 18)));
+    final list = (d['leaves'] as List).map((e) => Map<String, dynamic>.from(e)).toList();
+    if (list.isEmpty && !stale) return Center(child: Text(L.t('no_requests'), style: const TextStyle(fontSize: 18)));
     return RefreshIndicator(
       onRefresh: _load,
-      child: ListView(padding: const EdgeInsets.all(16), children: [for (final l in _list!) LeaveTile(leave: l)]),
+      child: ListView(padding: const EdgeInsets.all(16), children: [
+        if (stale) const SavedNote(),
+        if (list.isEmpty) Text(L.t('no_requests'), style: const TextStyle(fontSize: 18)),
+        for (final l in list) LeaveTile(leave: l),
+      ]),
     );
   }
 }

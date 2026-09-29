@@ -135,6 +135,45 @@ class ErrorRetry extends StatelessWidget {
   }
 }
 
+/// Small line above data kept from last time when refreshing it failed.
+/// Tap to try again.
+class StaleNote extends StatelessWidget {
+  const StaleNote({super.key, required this.error, required this.onRetry});
+  final Object error;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final e = error;
+    final net = e is ApiError && e.isNetwork;
+    // Not a passing failure: say why (e.g. "This phone is not the owner phone").
+    final notOwner = e is ApiError && e.code == 'NOT_OWNER';
+    final style = Theme.of(context).textTheme.bodySmall?.copyWith(color: notOwner ? Colors.red : Colors.grey);
+    return Center(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onRetry,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(net ? Icons.wifi_off_rounded : Icons.sync_problem_rounded, size: 14, color: Colors.grey),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                  notOwner
+                      ? '$e'
+                      : net
+                          ? 'Offline · showing saved data'
+                          : "Couldn't refresh · showing saved data",
+                  style: style),
+            ),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
 void toast(BuildContext context, String msg, {bool error = false}) {
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
     content: Text(msg),

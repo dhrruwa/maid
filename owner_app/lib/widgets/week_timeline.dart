@@ -13,12 +13,22 @@ import 'motion.dart';
 class WeekTimeline extends StatefulWidget {
   const WeekTimeline({super.key});
 
+  /// The last 7 days from the server (also saved for the next time it opens).
+  static Future<Map<String, dynamic>> fetch() {
+    final today = istToday();
+    return Api.read('get_timeline', key: 'week', body: {
+      'from': ymd(today.subtract(const Duration(days: 6))),
+      'to': ymd(today),
+    });
+  }
+
   @override
   State<WeekTimeline> createState() => _WeekTimelineState();
 }
 
 class _WeekTimelineState extends State<WeekTimeline> with SingleTickerProviderStateMixin {
-  Map<String, dynamic>? _data;
+  // Last saved week (may end yesterday on a new day): shown at once, then refreshed.
+  Map<String, dynamic>? _data = Api.cached('get_timeline', key: 'week');
   Object? _error;
   int _seenVersion = -1;
   (String, String)? _pulseAt; // (date, slot) of a scan from the last 30 minutes
@@ -45,12 +55,8 @@ class _WeekTimelineState extends State<WeekTimeline> with SingleTickerProviderSt
 
   Future<void> _load() async {
     _seenVersion = AppState.i.version;
-    final today = istToday();
     try {
-      final r = await Api.call('get_timeline', {
-        'from': ymd(today.subtract(const Duration(days: 6))),
-        'to': ymd(today),
-      });
+      final r = await WeekTimeline.fetch();
       if (!mounted) return;
       setState(() {
         _data = r;

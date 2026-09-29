@@ -14,17 +14,19 @@ handle(async (body) => {
   const last = prevMonth(current);
   const startMonth = toIst(new Date(ctx.house.created_at)).date.slice(0, 7);
 
-  const [salary, pending, off] = await Promise.all([
+  // Everything after the owner lookup runs in one parallel batch.
+  const [salary, pending, off, lastSummary] = await Promise.all([
     liveSalary(ctx),
     ctx.sb.from("leave_requests").select("id,date,slot,reason,status,created_at")
       .eq("house_id", ctx.house.id).eq("status", "pending").is("deleted_at", null)
       .order("date"),
     offSlots(ctx.sb, ctx.house.id, now.date),
+    last >= startMonth ? computeMonth(ctx, last, { now }) : null,
   ]);
 
   let salaryDue = null;
-  if (last >= startMonth) {
-    const s = await computeMonth(ctx, last, { now });
+  if (lastSummary) {
+    const s = lastSummary;
     if (!s.payment && s.totals.earned > 0) salaryDue = { month: last, total: s.totals.earned };
   }
 

@@ -20,18 +20,25 @@ class _SlipScreenState extends State<SlipScreen> {
   Map<String, dynamic>? _s;
   Object? _error;
 
+  /// [_s] came from the server (not only the saved copy), so it can be marked as paid.
+  bool _fresh = false;
+
   @override
   void initState() {
     super.initState();
+    // Saved copy (e.g. from the Calendar) at once, then the fresh one.
+    final saved = Api.cached('get_month_summary', body: {'month': widget.month});
+    if (saved != null) _s = Map<String, dynamic>.from(saved['summary']);
     _load();
   }
 
   Future<void> _load() async {
     try {
-      final r = await Api.call('get_month_summary', {'month': widget.month});
+      final r = await Api.read('get_month_summary', body: {'month': widget.month});
       if (mounted) setState(() {
         _s = Map<String, dynamic>.from(r['summary']);
         _error = null;
+        _fresh = true;
       });
     } catch (e) {
       if (mounted) setState(() => _error = e);
@@ -86,6 +93,7 @@ class _SlipScreenState extends State<SlipScreen> {
     }
 
     return ListView(padding: const EdgeInsets.all(16), children: [
+      if (_error != null) StaleNote(error: _error!, onRetry: _load),
       SectionCard(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
@@ -122,7 +130,8 @@ class _SlipScreenState extends State<SlipScreen> {
         ]),
       ),
       const SizedBox(height: 12),
-      if (p == null && monthOver) ...[
+      // Only with the server's figures: the saved copy may show an old total or "Not paid".
+      if (p == null && monthOver && _fresh) ...[
         FilledButton.icon(onPressed: _markPaid, icon: const Icon(Icons.payments_rounded), label: const Text('Mark as paid')),
         const SizedBox(height: 8),
       ],
