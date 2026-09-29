@@ -2,7 +2,7 @@
 
 Layout, spacing and interaction patterns were taken from these screens. No branding, logos or exact visuals were copied.
 
-## Owner app – "Cook Dashboard"
+## Owner app – "Owner"
 
 | Screen | Reference picked | Why / what we took |
 |---|---|---|
@@ -19,7 +19,7 @@ Layout, spacing and interaction patterns were taken from these screens. No brand
 | Payment slip | [Fresha – Invoice](https://mobbin.com/screens/67f765ef-c59f-478c-98d0-a46a3b103a1f), [Shop – Receipt](https://mobbin.com/screens/9abcfbfe-666f-4d55-8235-20900f8c4a7b) | Header block (who/when), line items, bold total, then two buttons: Share / Download. |
 | Settings | [Perplexity – Notifications](https://mobbin.com/screens/2529b4b9-86d6-406f-b9d8-f3271208cfcd) | Grouped rounded card, icon + title + one-line description + switch per row. |
 
-## Maid app – "Cook Attendance"
+## Maid app – "Maid"
 
 | Screen | Reference picked | Why / what we took |
 |---|---|---|

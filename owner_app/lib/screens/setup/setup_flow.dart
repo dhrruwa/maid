@@ -180,7 +180,7 @@ class _Welcome extends StatelessWidget {
         const Spacer(),
         const Center(child: AppLogo(size: 128)),
         const SizedBox(height: 28),
-        Text('Cook Dashboard',
+        Text('Owner',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800)),
         const SizedBox(height: 10),

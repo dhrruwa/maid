@@ -5,8 +5,8 @@ This repo has three parts:
 | Folder | What it is |
 |---|---|
 | `supabase/` | The backend: database tables, history triggers, security rules, and the Edge Functions |
-| `owner_app/` | **Cook Dashboard**, the owner's app (Android + iPhone) |
-| `maid_app/` | **Cook Attendance**, the cook's app (Android + iPhone) |
+| `owner_app/` | **Owner**, the owner's app (Android + iPhone) |
+| `maid_app/` | **Maid**, the cook's app (Android + iPhone) |
 
 Docs: `docs/API.md` (Edge Functions the maid app uses) and `docs/mobbin_references.md` (the UI reference for each screen).
 

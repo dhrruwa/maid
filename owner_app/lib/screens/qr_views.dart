@@ -70,7 +70,7 @@ class HouseQrView extends StatelessWidget {
               pw.SizedBox(height: 24),
               pw.BarcodeWidget(barcode: pw.Barcode.qrCode(), data: st.houseQrPayload, width: 360, height: 360),
               pw.SizedBox(height: 24),
-              pw.Text('Cook Attendance app → Scan QR', style: const pw.TextStyle(fontSize: 14)),
+              pw.Text('Maid app → Scan QR', style: const pw.TextStyle(fontSize: 14)),
             ]),
           ),
         ));
@@ -182,7 +182,7 @@ class _PairViewState extends State<PairView> {
     final expired = left.isNegative;
     final code = '${_tok!['code']}';
     return Column(children: [
-      Text('On the cook\'s phone open Cook Attendance and tap "Scan pairing QR".',
+      Text('On the cook\'s phone open the Maid app and tap "Scan pairing QR".',
           textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodyMedium),
       const SizedBox(height: 16),
       Opacity(opacity: expired ? 0.2 : 1, child: QrTile(data: '${_tok!['qr_payload']}', size: 220)),

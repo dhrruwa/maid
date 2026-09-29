@@ -1,6 +1,6 @@
-# Cook Attendance – Edge Function API (for the maid app)
+# Maid – Edge Function API (for the maid app)
 
-The owner app ("Cook Dashboard") created the Supabase project, database and all Edge Functions. The maid app ("Cook Attendance") only calls the functions listed below.
+The owner app ("Owner") created the Supabase project, database and all Edge Functions. The maid app ("Maid") only calls the functions listed below.
 
 ## How to call
 

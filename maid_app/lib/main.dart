@@ -49,7 +49,7 @@ class CookApp extends StatelessWidget {
     return ValueListenableBuilder<String>(
       valueListenable: L.lang,
       builder: (context, lang, _) => MaterialApp(
-        title: 'Cook Attendance',
+        title: 'Maid',
         debugShowCheckedModeBanner: false,
         navigatorKey: navKey,
         scaffoldMessengerKey: messengerKey,

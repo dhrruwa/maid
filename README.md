@@ -1,17 +1,17 @@
-# Cook Dashboard + Cook Attendance
+# Owner + Maid: home cook attendance
 
 <p>
-  <img src="branding/cook-dashboard-rounded.svg" width="96" alt="Cook Dashboard logo">
+  <img src="branding/cook-dashboard-rounded.svg" width="96" alt="Owner logo">
   &nbsp;
-  <img src="branding/cook-attendance-rounded.svg" width="96" alt="Cook Attendance logo">
+  <img src="branding/cook-attendance-rounded.svg" width="96" alt="Maid logo">
 </p>
 
 Two Flutter apps and a Supabase backend for tracking a home cook's attendance, salary, holidays, leave and daily menu.
 
 | Part | Folder | Platform |
 |---|---|---|
-| Owner app – **Cook Dashboard** | `owner_app/` | Android, iPhone |
-| Maid app – **Cook Attendance** (English + ಕನ್ನಡ) | `maid_app/` | Android, iPhone |
+| Owner app – **Owner** | `owner_app/` | Android, iPhone |
+| Maid app – **Maid** (English + ಕನ್ನಡ) | `maid_app/` | Android, iPhone |
 | Backend – Postgres schema, triggers, RLS, 34 Edge Functions, cron | `supabase/` | Supabase |
 
 - **Setup, build and install steps:** [docs/SETUP_GUIDE.md](docs/SETUP_GUIDE.md)

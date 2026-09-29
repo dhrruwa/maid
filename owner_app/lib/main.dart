@@ -42,7 +42,7 @@ class OwnerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Cook Dashboard',
+      title: 'Owner',
       debugShowCheckedModeBanner: false,
       scaffoldMessengerKey: messengerKey,
       theme: buildTheme(Brightness.light),

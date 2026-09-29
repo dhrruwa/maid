@@ -39,7 +39,7 @@ Future<void> exportAllData() async {
 
   final bytes = excel.encode();
   if (bytes == null) throw ApiError('EXPORT', 'Could not create the Excel file');
-  final name = 'cook-dashboard-export-${ymd(istToday())}.xlsx';
+  final name = 'owner-export-${ymd(istToday())}.xlsx';
   await SharePlus.instance.share(ShareParams(
     files: [
       XFile.fromData(
@@ -48,6 +48,6 @@ Future<void> exportAllData() async {
         name: name,
       ),
     ],
-    text: 'Cook Dashboard – all data',
+    text: 'Owner app – all data',
   ));
 }

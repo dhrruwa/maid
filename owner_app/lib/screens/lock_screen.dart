@@ -13,7 +13,7 @@ class LockScreen extends StatelessWidget {
       body: SafeArea(
         child: PinPad(
           title: 'Enter PIN',
-          subtitle: 'Cook Dashboard',
+          subtitle: 'Owner',
           onCompleted: (pin) async {
             if (!Device.checkPin(pin)) return false;
             onUnlocked();
