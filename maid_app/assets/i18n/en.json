@@ -117,5 +117,13 @@
   "nothing_cooked": "No menu on this day",
   "day_by_day": "Day by day",
   "amount": "Amount",
-  "new_version_needed": "Supabase key missing. See setup guide."
+  "new_version_needed": "Supabase key missing. See setup guide.",
+  "this_week": "This week",
+  "missed_n": "{count} missed",
+  "no_gaps": "No gaps",
+  "legend_scan": "Scan",
+  "legend_manual": "Added by owner",
+  "legend_missed": "Missed (gap)",
+  "legend_now": "Now",
+  "timeline_error": "Could not load this week"
 }

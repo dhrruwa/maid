@@ -19,7 +19,8 @@ class LangButton extends StatelessWidget {
           minimumSize: const Size(48, 44),
           padding: const EdgeInsets.symmetric(horizontal: 14),
           side: const BorderSide(color: accent, width: 1.5),
-          foregroundColor: brand,
+          foregroundColor: espresso,
+          backgroundColor: Colors.white.withValues(alpha: 0.6),
           iconColor: accent,
         ),
         onPressed: () async {

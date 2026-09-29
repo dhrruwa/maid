@@ -1,11 +1,19 @@
+import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-// Palette "Espresso & Saffron", same as the owner app (see docs/COLOR_PALETTE.md):
-// espresso for buttons and text, saffron only for icons, borders and tints.
-const brand = Color(0xFF3A2A22); // espresso
-const accent = Color(0xFFE8731F); // saffron
-const appBackground = Color(0xFFFBF6F0);
+import '../widgets/glass.dart';
+
+// Palette "Saffron Glass", same as the owner app (docs/COLOR_PALETTE.md):
+// light glass over a warm saffron glow. Buttons are saffron-tinted glass with
+// dark espresso text (6.4:1). Plain saffron is never used for text.
+const accent = Color(0xFFE8731F); // saffron: icons, rims, glow
+const espresso = Color(0xFF2A1B12); // text, and text on saffron buttons
+const saffronFill = Color(0xFFEB873E);
+const saffronPressed = Color(0xFFE27A2F);
+const saffronRim = Color(0xFFC9621A);
+const tint = Color(0xFFFFE0C7);
+const appBackground = Color(0xFFFFF6EE);
 
 class StatusColors {
   static const done = Color(0xFF2E9E5B);
@@ -17,47 +25,81 @@ class StatusColors {
 }
 
 /// Big text and big touch targets for a simple, easy app. Light mode.
+/// "Light glass": translucent surfaces with a bright rim, but no live blur,
+/// so it stays smooth on low-end Android phones.
 ThemeData buildTheme() {
   final scheme = ColorScheme.fromSeed(seedColor: accent, brightness: Brightness.light).copyWith(
-    primary: brand,
+    primary: const Color(0xFF9A4A12), // burnt saffron: readable on light (5.8:1)
     onPrimary: Colors.white,
-    secondaryContainer: const Color(0xFFFCE3CF),
-    onSecondaryContainer: brand,
+    secondaryContainer: tint,
+    onSecondaryContainer: espresso,
     surface: appBackground,
+    onSurface: espresso,
   );
   final base = ThemeData(useMaterial3: true, colorScheme: scheme);
-  final tt = base.textTheme.apply(fontSizeFactor: 1.12);
+  final tt = base.textTheme.apply(fontSizeFactor: 1.12, bodyColor: espresso, displayColor: espresso);
   return base.copyWith(
     textTheme: tt,
-    scaffoldBackgroundColor: appBackground,
+    // Every page paints the saffron glow itself (GlassPageTransitionsBuilder).
+    scaffoldBackgroundColor: Colors.transparent,
+    pageTransitionsTheme: const PageTransitionsTheme(builders: {
+      TargetPlatform.android: GlassPageTransitionsBuilder(PredictiveBackPageTransitionsBuilder()),
+      TargetPlatform.iOS: GlassPageTransitionsBuilder(CupertinoPageTransitionsBuilder()),
+    }),
     appBarTheme: AppBarTheme(
-      backgroundColor: appBackground,
+      backgroundColor: Colors.transparent,
       surfaceTintColor: Colors.transparent,
-      titleTextStyle: tt.titleLarge?.copyWith(fontWeight: FontWeight.w800, color: Colors.black87),
+      scrolledUnderElevation: 0,
+      titleTextStyle: tt.titleLarge?.copyWith(fontWeight: FontWeight.w800, color: espresso),
     ),
     cardTheme: CardThemeData(
       elevation: 0,
-      color: Colors.white,
+      color: Colors.white.withValues(alpha: 0.7),
       margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(22),
+        side: BorderSide(color: Colors.white.withValues(alpha: 0.85)),
+      ),
     ),
     filledButtonTheme: FilledButtonThemeData(
-      style: FilledButton.styleFrom(
-        minimumSize: const Size(56, 60),
-        textStyle: const TextStyle(fontSize: 19, fontWeight: FontWeight.w700),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      style: ButtonStyle(
+        backgroundColor: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.disabled)
+            ? saffronFill.withValues(alpha: 0.35)
+            : s.contains(WidgetState.pressed)
+                ? saffronPressed
+                : saffronFill),
+        foregroundColor: WidgetStateProperty.resolveWith(
+            (s) => s.contains(WidgetState.disabled) ? espresso.withValues(alpha: 0.45) : espresso),
+        overlayColor: WidgetStatePropertyAll(Colors.white.withValues(alpha: 0.14)),
+        side: WidgetStatePropertyAll(BorderSide(color: saffronRim.withValues(alpha: 0.85))),
+        elevation: const WidgetStatePropertyAll(0),
+        minimumSize: const WidgetStatePropertyAll(Size(56, 60)),
+        textStyle: const WidgetStatePropertyAll(TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
+        shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadius.circular(18))),
+        foregroundBuilder: (context, states, child) => GlassHighlight(radius: 18, child: child!),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         minimumSize: const Size(56, 58),
-        textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+        foregroundColor: espresso,
+        backgroundColor: Colors.white.withValues(alpha: 0.62),
+        side: BorderSide(color: saffronRim.withValues(alpha: 0.35)),
+        textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       ),
     ),
+    bottomSheetTheme: const BottomSheetThemeData(
+      backgroundColor: Color(0xF7FFF8F2),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+    ),
+    dialogTheme: DialogThemeData(
+      backgroundColor: const Color(0xFAFFF8F2),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+    ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: Colors.white,
+      fillColor: Colors.white.withValues(alpha: 0.8),
       contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
     ),

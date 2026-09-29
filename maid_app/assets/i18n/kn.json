@@ -117,5 +117,13 @@
   "nothing_cooked": "ಈ ದಿನ ಮೆನು ಇರಲಿಲ್ಲ",
   "day_by_day": "ದಿನವಾರು",
   "amount": "ಮೊತ್ತ",
-  "new_version_needed": "Supabase ಕೀ ಇಲ್ಲ. ಸೆಟಪ್ ಮಾರ್ಗದರ್ಶಿ ನೋಡಿ."
+  "new_version_needed": "Supabase ಕೀ ಇಲ್ಲ. ಸೆಟಪ್ ಮಾರ್ಗದರ್ಶಿ ನೋಡಿ.",
+  "this_week": "ಈ ವಾರ",
+  "missed_n": "{count} ತಪ್ಪಿದೆ",
+  "no_gaps": "ಯಾವುದೂ ತಪ್ಪಿಲ್ಲ",
+  "legend_scan": "ಸ್ಕ್ಯಾನ್",
+  "legend_manual": "ಮಾಲೀಕರು ಸೇರಿಸಿದ್ದು",
+  "legend_missed": "ತಪ್ಪಿದ ಭೇಟಿ",
+  "legend_now": "ಈಗ",
+  "timeline_error": "ಈ ವಾರದ ಮಾಹಿತಿ ಲೋಡ್ ಆಗಲಿಲ್ಲ"
 }

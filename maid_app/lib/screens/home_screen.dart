@@ -9,7 +9,9 @@ import '../core/i18n.dart';
 import '../core/offline_queue.dart';
 import '../core/theme.dart';
 import '../widgets/common.dart';
+import '../widgets/motion.dart';
 import '../widgets/video.dart';
+import '../widgets/week_timeline.dart';
 import 'history_screen.dart';
 import 'leave_screen.dart';
 import 'pairing_screen.dart';
@@ -37,6 +39,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Map<String, dynamic>? _menuToday;
   Map<String, dynamic>? _menuTomorrow;
   bool _fromCache = false;
+  int _loads = 0;
   bool _loading = false;
   String? _error;
   int? _bump;
@@ -98,6 +101,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       HomeScreen.justEarned = null;
       if (!mounted) return;
       setState(() {
+        _loads++;
         _salary = salary;
         _menuToday = res[1];
         _menuTomorrow = res[2];
@@ -154,6 +158,53 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     final name = Device.name;
+    final sections = _salary == null
+        ? const <Widget>[]
+        : <Widget>[
+            if (OfflineQueue.count > 0)
+              _Banner(
+                icon: Icons.cloud_upload_rounded,
+                color: StatusColors.wait,
+                text: L.t('offline_pending', {'count': OfflineQueue.count}),
+              ),
+            if (_fromCache || _error != null)
+              _Banner(icon: Icons.wifi_off_rounded, color: StatusColors.grey, text: L.t('showing_saved')),
+            _SalaryCard(s: _salary!, bump: _bump),
+            if (_salary!['today_info'] != null) _TodayCard(day: Map<String, dynamic>.from(_salary!['today_info'])),
+            BigButton(
+              icon: Icons.qr_code_scanner_rounded,
+              label: L.t('scan_qr'),
+              height: 92,
+              onPressed: () => startScan(context),
+            ),
+            _CookCard(
+              tab: _tab,
+              onTab: (t) => setState(() => _tab = t),
+              today: _menuToday,
+              tomorrow: _menuTomorrow,
+            ),
+            // Rebuilt after every reload so a new scan shows up straight away.
+            WeekTimeline(key: ValueKey(_loads)),
+            Row(children: [
+              Expanded(
+                child: BigButton(
+                  icon: Icons.event_busy_rounded,
+                  label: L.t('request_leave'),
+                  filled: false,
+                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LeaveScreen())),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: BigButton(
+                  icon: Icons.history_rounded,
+                  label: L.t('my_history'),
+                  filled: false,
+                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HistoryScreen())),
+                ),
+              ),
+            ]),
+          ];
     return Scaffold(
       appBar: AppBar(
         title: Text(name.isEmpty ? L.t('app_title') : L.t('hello', {'name': name})),
@@ -168,60 +219,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 await OfflineQueue.sync();
                 await _load();
               },
-              child: ListView(padding: const EdgeInsets.fromLTRB(16, 4, 16, 28), children: [
-                if (OfflineQueue.count > 0) ...[
-                  _Banner(
-                    icon: Icons.cloud_upload_rounded,
-                    color: StatusColors.wait,
-                    text: L.t('offline_pending', {'count': OfflineQueue.count}),
-                  ),
-                  const SizedBox(height: 10),
-                ],
-                if (_fromCache || _error != null) ...[
-                  _Banner(icon: Icons.wifi_off_rounded, color: StatusColors.grey, text: L.t('showing_saved')),
-                  const SizedBox(height: 10),
-                ],
-                _SalaryCard(s: _salary!, bump: _bump),
-                const SizedBox(height: 14),
-                if (_salary!['today_info'] != null) ...[
-                  _TodayCard(day: Map<String, dynamic>.from(_salary!['today_info'])),
-                  const SizedBox(height: 16),
-                ],
-                BigButton(
-                  icon: Icons.qr_code_scanner_rounded,
-                  label: L.t('scan_qr'),
-                  height: 92,
-                  iconColor: accent,
-                  onPressed: () => startScan(context),
-                ),
-                const SizedBox(height: 16),
-                _CookCard(
-                  tab: _tab,
-                  onTab: (t) => setState(() => _tab = t),
-                  today: _menuToday,
-                  tomorrow: _menuTomorrow,
-                ),
-                const SizedBox(height: 16),
-                Row(children: [
-                  Expanded(
-                    child: BigButton(
-                      icon: Icons.event_busy_rounded,
-                      label: L.t('request_leave'),
-                      filled: false,
-                      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LeaveScreen())),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: BigButton(
-                      icon: Icons.history_rounded,
-                      label: L.t('my_history'),
-                      filled: false,
-                      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HistoryScreen())),
-                    ),
-                  ),
-                ]),
-              ]),
+              child: ListView.separated(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 28),
+                itemCount: sections.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 14),
+                itemBuilder: (_, i) => EntryAnimation(index: i, child: sections[i]),
+              ),
             ),
     );
   }
@@ -548,7 +551,7 @@ class _SlotMenu extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: appBackground,
+        color: Colors.white.withValues(alpha: 0.55),
         borderRadius: BorderRadius.circular(18),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [

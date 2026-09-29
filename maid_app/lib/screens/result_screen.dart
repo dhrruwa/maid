@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/i18n.dart';
 import '../core/theme.dart';
+import '../widgets/week_timeline.dart';
 
 enum ResultKind { ok, saved, fail }
 
@@ -52,55 +53,67 @@ class ResultScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: color,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(28),
-          child: Column(children: [
-            const Spacer(),
-            TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0.5, end: 1),
-              duration: const Duration(milliseconds: 350),
-              curve: Curves.easeOutBack,
-              builder: (_, s, child) => Transform.scale(scale: s, child: child),
-              child: Icon(icon, size: 150, color: Colors.white),
+        child: Column(children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(24, 28, 24, 12),
+              child: Column(children: [
+                TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0.5, end: 1),
+                  duration: const Duration(milliseconds: 350),
+                  curve: Curves.easeOutBack,
+                  builder: (_, s, child) => Transform.scale(scale: s, child: child),
+                  child: Icon(icon, size: 130, color: Colors.white),
+                ),
+                const SizedBox(height: 14),
+                Text(title, textAlign: TextAlign.center, style: white.copyWith(fontSize: 34, fontWeight: FontWeight.w900)),
+                const SizedBox(height: 14),
+                if (r.kind == ResultKind.ok) ...[
+                  Text(
+                    L.t('at_time', {'slot': L.slot(r.slot!), 'time': L.time(r.timeIso!)}),
+                    style: white.copyWith(fontSize: 24, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(30)),
+                    child: Text(L.t('earned_amount', {'amount': rupees(r.amount)}),
+                        style: white.copyWith(fontSize: 30, fontWeight: FontWeight.w900)),
+                  ),
+                ],
+                if (r.kind == ResultKind.saved)
+                  Text(L.t('saved_body'), textAlign: TextAlign.center, style: white.copyWith(fontSize: 22)),
+                if (r.kind == ResultKind.fail) ...[
+                  Text(r.reason ?? '', textAlign: TextAlign.center, style: white.copyWith(fontSize: 26, fontWeight: FontWeight.w700)),
+                  if (r.detail != null) ...[
+                    const SizedBox(height: 10),
+                    Text(r.detail!, textAlign: TextAlign.center, style: white.copyWith(fontSize: 19)),
+                  ],
+                ],
+                // Right after a scan is logged: the week, with this visit pulsing
+                // and any missed visits showing as gaps. (Needs internet.)
+                if (r.kind != ResultKind.saved) ...[
+                  const SizedBox(height: 24),
+                  WeekTimeline(pulseSlot: r.kind == ResultKind.ok ? r.slot : null, opacity: 0.94),
+                ],
+              ]),
             ),
-            const SizedBox(height: 20),
-            Text(title, textAlign: TextAlign.center, style: white.copyWith(fontSize: 34, fontWeight: FontWeight.w900)),
-            const SizedBox(height: 16),
-            if (r.kind == ResultKind.ok) ...[
-              Text(
-                L.t('at_time', {'slot': L.slot(r.slot!), 'time': L.time(r.timeIso!)}),
-                style: white.copyWith(fontSize: 24, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
-                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(30)),
-                child: Text(L.t('earned_amount', {'amount': rupees(r.amount)}),
-                    style: white.copyWith(fontSize: 30, fontWeight: FontWeight.w900)),
-              ),
-            ],
-            if (r.kind == ResultKind.saved)
-              Text(L.t('saved_body'), textAlign: TextAlign.center, style: white.copyWith(fontSize: 22)),
-            if (r.kind == ResultKind.fail) ...[
-              Text(r.reason ?? '', textAlign: TextAlign.center, style: white.copyWith(fontSize: 26, fontWeight: FontWeight.w700)),
-              if (r.detail != null) ...[
-                const SizedBox(height: 10),
-                Text(r.detail!, textAlign: TextAlign.center, style: white.copyWith(fontSize: 19)),
-              ],
-            ],
-            const Spacer(),
-            FilledButton(
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
+            child: FilledButton(
               style: FilledButton.styleFrom(
                 backgroundColor: Colors.white,
-                foregroundColor: color,
+                foregroundColor: espresso,
+                side: BorderSide.none,
                 minimumSize: const Size(double.infinity, 68),
                 textStyle: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
               ),
               onPressed: () => Navigator.pop(context),
               child: Text(L.t('ok')),
             ),
-          ]),
-        ),
+          ),
+        ]),
       ),
     );
   }

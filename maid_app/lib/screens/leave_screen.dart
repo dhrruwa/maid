@@ -71,7 +71,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4),
           child: Material(
-            color: sel ? brand : Colors.white,
+            color: sel ? saffronFill : Colors.white.withValues(alpha: 0.7),
             borderRadius: BorderRadius.circular(18),
             child: InkWell(
               borderRadius: BorderRadius.circular(18),
@@ -81,14 +81,14 @@ class _LeaveScreenState extends State<LeaveScreen> {
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: sel ? accent : Colors.black26, width: 2),
+                  border: Border.all(color: sel ? saffronRim : Colors.white, width: 2),
                 ),
                 child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  Icon(icon, size: 30, color: sel ? Colors.white : Colors.black87),
+                  Icon(icon, size: 30, color: espresso),
                   const SizedBox(height: 4),
                   Text(L.slot(slot),
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: sel ? Colors.white : Colors.black87)),
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: espresso)),
                 ]),
               ),
             ),
@@ -103,7 +103,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
         Text(L.t('leave_date'), style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
         const SizedBox(height: 8),
         Material(
-          color: Colors.white,
+          color: Colors.white.withValues(alpha: 0.7),
           borderRadius: BorderRadius.circular(18),
           child: InkWell(
             borderRadius: BorderRadius.circular(18),
@@ -113,7 +113,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 18),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: Colors.black26, width: 2),
+                border: Border.all(color: Colors.white, width: 2),
               ),
               child: Row(children: [
                 const Icon(Icons.calendar_month_rounded, size: 30, color: accent),
