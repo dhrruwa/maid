@@ -493,6 +493,10 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Development";
+				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
+				PROVISIONING_PROFILE_SPECIFIER = "Owner Development (push)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.dhrruwa.cookdashboard;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
@@ -678,6 +682,10 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Development";
+				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
+				PROVISIONING_PROFILE_SPECIFIER = "Owner Development (push)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.dhrruwa.cookdashboard;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
@@ -701,6 +709,10 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Development";
+				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
+				PROVISIONING_PROFILE_SPECIFIER = "Owner Development (push)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.dhrruwa.cookdashboard;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";

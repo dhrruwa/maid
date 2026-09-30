@@ -24,13 +24,18 @@ class AppConfig {
   /// (values are also inside google-services.json). Leave empty to run
   /// without push notifications.
   static const firebaseApiKey = String.fromEnvironment('FIREBASE_API_KEY', defaultValue: '');
-  static const firebaseAppId = String.fromEnvironment('FIREBASE_APP_ID', defaultValue: '');
+  // Owner and Maid share dart_defines.json but are separate Firebase apps.
+  static const firebaseAppId =
+      String.fromEnvironment('FIREBASE_APP_ID_MAID', defaultValue: String.fromEnvironment('FIREBASE_APP_ID'));
   static const firebaseSenderId = String.fromEnvironment('FIREBASE_SENDER_ID', defaultValue: '');
   static const firebaseProjectId = String.fromEnvironment('FIREBASE_PROJECT_ID', defaultValue: '');
 
   /// iPhone only: Firebase → Project settings → Your apps → iOS app → App ID
   /// (iOS push also needs an APNs key uploaded to Firebase).
-  static const firebaseIosAppId = String.fromEnvironment('FIREBASE_IOS_APP_ID', defaultValue: '');
+  static const firebaseIosAppId =
+      String.fromEnvironment('FIREBASE_IOS_APP_ID_MAID', defaultValue: String.fromEnvironment('FIREBASE_IOS_APP_ID'));
+  // Firebase gives iOS apps their own API key.
+  static const firebaseIosApiKey = String.fromEnvironment('FIREBASE_IOS_API_KEY', defaultValue: firebaseApiKey);
 
   static bool get firebaseConfigured =>
       firebaseApiKey.isNotEmpty &&

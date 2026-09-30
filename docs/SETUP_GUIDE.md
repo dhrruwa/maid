@@ -74,14 +74,19 @@ This schedules:
   "SUPABASE_URL": "https://YOUR_PROJECT_REF.supabase.co",
   "SUPABASE_ANON_KEY": "eyJ...",
   "FIREBASE_API_KEY": "AIza...",
-  "FIREBASE_APP_ID": "1:123:android:...",
-  "FIREBASE_IOS_APP_ID": "1:123:ios:...",
+  "FIREBASE_IOS_API_KEY": "AIza...",
   "FIREBASE_SENDER_ID": "123456789",
-  "FIREBASE_PROJECT_ID": "my-project"
+  "FIREBASE_PROJECT_ID": "my-project",
+  "FIREBASE_APP_ID_OWNER": "1:123:android:...",
+  "FIREBASE_IOS_APP_ID_OWNER": "1:123:ios:...",
+  "FIREBASE_APP_ID_MAID": "1:123:android:...",
+  "FIREBASE_IOS_APP_ID_MAID": "1:123:ios:..."
 }
 ```
 Then add `--dart-define-from-file=../dart_defines.json` to every build command below, for example `flutter build apk --release --dart-define-from-file=../dart_defines.json`.
-The two apps have different Firebase App IDs, so keep one file per app if you use Firebase, e.g. `dart_defines.owner.json` and `dart_defines.maid.json`.
+One file serves both apps: each reads its own `…_OWNER` / `…_MAID` App IDs. Firebase gives iOS apps a separate API key (`API_KEY` in GoogleService-Info.plist), hence `FIREBASE_IOS_API_KEY`.
+
+**iPhone push signing (Owner app):** the Runner target signs manually with the development profile **"Owner Development (push)"** (explicit App ID `com.dhrruwa.cookdashboard` with Push Notifications on). A wildcard team profile can't carry push. When you add a new iPhone, regenerate that profile in Apple Developer → Profiles with the device ticked, or sign in to Xcode and switch the target back to automatic signing.
 
 **Or** edit the default values directly in **both** `owner_app/lib/config.dart` and `maid_app/lib/config.dart`. Don't do this if your repo is public:
 

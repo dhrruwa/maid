@@ -20,7 +20,7 @@ class Push {
     try {
       await Firebase.initializeApp(
         options: FirebaseOptions(
-          apiKey: AppConfig.firebaseApiKey,
+          apiKey: Platform.isIOS ? AppConfig.firebaseIosApiKey : AppConfig.firebaseApiKey,
           appId: Platform.isIOS ? AppConfig.firebaseIosAppId : AppConfig.firebaseAppId,
           iosBundleId: Platform.isIOS ? 'com.dhrruwa.cookattendance' : null,
           messagingSenderId: AppConfig.firebaseSenderId,
