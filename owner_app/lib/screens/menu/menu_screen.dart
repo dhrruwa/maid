@@ -5,6 +5,7 @@ import '../../core/api.dart';
 import '../../core/app_state.dart';
 import '../../core/format.dart';
 import '../../core/theme.dart';
+import '../../core/youtube.dart';
 import '../../widgets/common.dart';
 import '../../widgets/motion.dart';
 import '../../widgets/video.dart';
@@ -128,6 +129,34 @@ class _MenuScreenState extends State<MenuScreen> {
     await _save(items, success: 'Notes saved');
   }
 
+  /// The recipe video belongs to the dish, so it shows every time the dish is on the menu.
+  Future<void> _editVideo(int i, {bool remove = false}) async {
+    final it = _items[i];
+    final had = (it['youtube_url'] ?? '').toString().isNotEmpty;
+    final url = remove
+        ? ''
+        : (await askText(context, had ? 'Change YouTube video' : 'Add YouTube video',
+                hint: 'Paste the recipe video link', initial: '${it['youtube_url'] ?? ''}'))
+            ?.trim();
+    if (url == null || !mounted) return;
+    if (url.isNotEmpty && youtubeId(url) == null) {
+      toast(context, 'This is not a YouTube link', error: true);
+      return;
+    }
+    final r = await busy(
+      context,
+      () => Api.call('save_dish', {
+        'id': it['dish_id'],
+        'name': it['name'],
+        'youtube_url': url,
+        // save_dish replaces the dish's notes, so send the ones it has.
+        'notes': it['dish_notes'] ?? '',
+      }),
+      success: url.isEmpty ? 'Video removed' : 'Video saved for ${it['name']}',
+    );
+    if (r != null) AppState.i.changed();
+  }
+
   @override
   Widget build(BuildContext context) {
     final today = istToday();
@@ -242,6 +271,8 @@ class _MenuScreenState extends State<MenuScreen> {
                         item: _items[i],
                         onRemove: () => _remove(i),
                         onNotes: () => _editNotes(i),
+                        onVideo: () => _editVideo(i),
+                        onRemoveVideo: () => _editVideo(i, remove: true),
                       )),
                     ),
                   // Who is eating (Family app). Hidden on an off meal unless
@@ -331,10 +362,18 @@ class _OffBanner extends StatelessWidget {
 }
 
 class _DishCard extends StatelessWidget {
-  const _DishCard({required this.item, required this.onRemove, required this.onNotes});
+  const _DishCard({
+    required this.item,
+    required this.onRemove,
+    required this.onNotes,
+    required this.onVideo,
+    required this.onRemoveVideo,
+  });
   final Map<String, dynamic> item;
   final VoidCallback onRemove;
   final VoidCallback onNotes;
+  final VoidCallback onVideo;
+  final VoidCallback onRemoveVideo;
 
   @override
   Widget build(BuildContext context) {
@@ -351,10 +390,17 @@ class _DishCard extends StatelessWidget {
           ]),
         ),
         PopupMenuButton<String>(
-          onSelected: (v) => v == 'notes' ? onNotes() : onRemove(),
-          itemBuilder: (_) => const [
-            PopupMenuItem(value: 'notes', child: Text('Edit notes')),
-            PopupMenuItem(value: 'remove', child: Text('Remove from menu')),
+          onSelected: (v) => switch (v) {
+            'notes' => onNotes(),
+            'video' => onVideo(),
+            'no_video' => onRemoveVideo(),
+            _ => onRemove(),
+          },
+          itemBuilder: (_) => [
+            const PopupMenuItem(value: 'notes', child: Text('Edit notes')),
+            PopupMenuItem(value: 'video', child: Text(yt == null ? 'Add YouTube video' : 'Change YouTube video')),
+            if (yt != null) const PopupMenuItem(value: 'no_video', child: Text('Remove video')),
+            const PopupMenuItem(value: 'remove', child: Text('Remove from menu')),
           ],
         ),
       ]),
