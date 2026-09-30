@@ -150,8 +150,8 @@ class _MonthScreenState extends State<MonthScreen> with CachedLoad {
                 const SizedBox(height: 4),
                 Text(
                   [
-                    ...(d['menu']['morning'] as List).map((e) => e['name']),
-                    ...(d['menu']['evening'] as List).map((e) => e['name']),
+                    ...(d['menu']['morning'] as List).map((e) => L.typed(e, 'name')),
+                    ...(d['menu']['evening'] as List).map((e) => L.typed(e, 'name')),
                   ].join(', '),
                   style: const TextStyle(fontSize: 13, color: StatusColors.grey),
                 ),

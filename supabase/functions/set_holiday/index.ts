@@ -5,6 +5,7 @@ import { must } from "../_shared/db.ts";
 import { ownerCtx } from "../_shared/auth.ts";
 import { addDays, daysBetween, isValidDate, shortDate } from "../_shared/time.ts";
 import { notifyMaid, slotEn, slotKn } from "../_shared/notify.ts";
+import { kannadaOf } from "../_shared/translate.ts";
 
 handle(async (body) => {
   requireFields(body, "from", "slot");
@@ -17,6 +18,7 @@ handle(async (body) => {
   if (!["morning", "evening", "full"].includes(body.slot)) throw new AppError("BAD_SLOT", "Invalid slot");
   const paid = body.paid !== false;
   const note = body.note ? String(body.note).slice(0, 300) : null;
+  const noteKn = await kannadaOf(sb, note);
 
   const dates: string[] = [];
   for (let d = from; d <= to; d = addDays(d, 1)) dates.push(d);
@@ -41,13 +43,14 @@ handle(async (body) => {
       slot: body.slot,
       paid,
       note,
+      note_kn: noteKn,
     }))).select("*"),
   );
 
   const range = from === to ? shortDate(from) : `${shortDate(from)} – ${shortDate(to)}`;
   await notifyMaid(ctx, {
     en: { title: "Holiday – no need to come", body: `${range} (${slotEn(body.slot)})${note ? ` · ${note}` : ""}` },
-    kn: { title: "ರಜೆ – ಬರುವ ಅಗತ್ಯವಿಲ್ಲ", body: `${range} (${slotKn(body.slot)})${note ? ` · ${note}` : ""}` },
+    kn: { title: "ರಜೆ – ಬರುವ ಅಗತ್ಯವಿಲ್ಲ", body: `${range} (${slotKn(body.slot)})${note ? ` · ${noteKn ?? note}` : ""}` },
   }, { kind: "holiday" });
 
   return { holidays: rows };

@@ -24,6 +24,7 @@ export interface OffInfo {
   type: "holiday" | "leave" | "not_needed";
   paid: boolean;
   note: string | null;
+  note_kn: string | null;
 }
 
 /** Is this slot off (holiday / approved leave / weekend evening)? */
@@ -43,13 +44,19 @@ export async function offSlotsRange(
   to: string,
 ): Promise<Map<string, Record<Slot, OffInfo | null>>> {
   const [hol, lv] = await Promise.all([
-    sb.from("holidays").select("date,slot,paid,note").eq("house_id", houseId)
+    sb.from("holidays").select("date,slot,paid,note,note_kn").eq("house_id", houseId)
       .gte("date", from).lte("date", to).is("deleted_at", null),
     sb.from("leave_requests").select("date,slot,status,reason").eq("house_id", houseId)
       .gte("date", from).lte("date", to)
       .in("status", ["approved_paid", "approved_unpaid"]).is("deleted_at", null),
   ]);
-  const holidays = must(hol) as { date: string; slot: string; paid: boolean; note: string | null }[];
+  const holidays = must(hol) as {
+    date: string;
+    slot: string;
+    paid: boolean;
+    note: string | null;
+    note_kn: string | null;
+  }[];
   const leaves = must(lv) as { date: string; slot: string; status: string; reason: string | null }[];
   const out = new Map<string, Record<Slot, OffInfo | null>>();
   for (let date = from; date <= to; date = addDays(date, 1)) {
@@ -58,11 +65,12 @@ export async function offSlotsRange(
       const h = holidays.find((x) => x.date === date && (x.slot === "full" || x.slot === slot));
       const l = leaves.find((x) => x.date === date && (x.slot === "full" || x.slot === slot));
       day[slot] = h
-        ? { type: "holiday", paid: h.paid, note: h.note }
+        ? { type: "holiday", paid: h.paid, note: h.note, note_kn: h.note_kn }
         : l
-        ? { type: "leave", paid: l.status === "approved_paid", note: l.reason }
+        // The leave reason is the maid's own words, so it needs no Kannada copy.
+        ? { type: "leave", paid: l.status === "approved_paid", note: l.reason, note_kn: null }
         : !slotExpected(date, slot)
-        ? { type: "not_needed", paid: false, note: null }
+        ? { type: "not_needed", paid: false, note: null, note_kn: null }
         : null;
     }
     out.set(date, day);
@@ -91,10 +99,11 @@ export async function notifyMenuChange(ctx: Ctx, changed: { date: string; slot: 
     seen.add(key);
     const dishes = menus.get(c.date)?.[c.slot] ?? [];
     const names = dishes.length ? dishes.map((d) => d.name).join(", ") : "—";
+    const namesKn = dishes.length ? dishes.map((d) => d.name_kn ?? d.name).join(", ") : "—";
     const dayEn = c.date === today ? "Today" : "Tomorrow";
     const dayKn = c.date === today ? KN.today : KN.tomorrow;
     en.push(`${dayEn} ${c.slot}: ${names}`);
-    kn.push(`${dayKn} ${c.slot === "morning" ? KN.morning : KN.evening}: ${names}`);
+    kn.push(`${dayKn} ${c.slot === "morning" ? KN.morning : KN.evening}: ${namesKn}`);
   }
   await notifyMaid(ctx, {
     en: { title: "What to cook", body: en.join("\n") },

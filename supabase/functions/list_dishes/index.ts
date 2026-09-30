@@ -6,7 +6,7 @@ import { ownerCtx } from "../_shared/auth.ts";
 handle(async (body) => {
   const ctx = await ownerCtx(body);
   const [dishes, uses] = await Promise.all([
-    ctx.sb.from("dishes").select("id,name,youtube_url,notes,created_at").eq("house_id", ctx.house.id)
+    ctx.sb.from("dishes").select("id,name,name_kn,youtube_url,notes,notes_kn,created_at").eq("house_id", ctx.house.id)
       .is("deleted_at", null).order("name"),
     ctx.sb.from("menu").select("dish_id").eq("house_id", ctx.house.id).is("deleted_at", null),
   ]);

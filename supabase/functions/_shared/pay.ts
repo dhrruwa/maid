@@ -40,6 +40,10 @@ export interface DishLine {
   youtube_url: string | null;
   dish_notes: string | null;
   notes: string | null;
+  // Kannada copies for the Maid app (null: not translated, show the English).
+  name_kn: string | null;
+  dish_notes_kn: string | null;
+  notes_kn: string | null;
 }
 
 export interface SlotInfo {
@@ -143,7 +147,7 @@ export async function menuFor(
 ): Promise<Map<string, { morning: DishLine[]; evening: DishLine[] }>> {
   const rows = must(
     await sb.from("menu")
-      .select("id,date,slot,notes,sort_order,dish_id,dishes(name,youtube_url,notes)")
+      .select("id,date,slot,notes,notes_kn,sort_order,dish_id,dishes(name,name_kn,youtube_url,notes,notes_kn)")
       .eq("house_id", houseId).is("deleted_at", null)
       .gte("date", from).lte("date", to)
       .order("sort_order"),
@@ -152,8 +156,15 @@ export async function menuFor(
     date: string;
     slot: Slot;
     notes: string | null;
+    notes_kn: string | null;
     dish_id: string;
-    dishes: { name: string; youtube_url: string | null; notes: string | null } | null;
+    dishes: {
+      name: string;
+      name_kn: string | null;
+      youtube_url: string | null;
+      notes: string | null;
+      notes_kn: string | null;
+    } | null;
   }[];
   const out = new Map<string, { morning: DishLine[]; evening: DishLine[] }>();
   for (const r of rows) {
@@ -165,6 +176,9 @@ export async function menuFor(
       youtube_url: r.dishes?.youtube_url ?? null,
       dish_notes: r.dishes?.notes ?? null,
       notes: r.notes,
+      name_kn: r.dishes?.name_kn ?? null,
+      dish_notes_kn: r.dishes?.notes_kn ?? null,
+      notes_kn: r.notes_kn,
     });
   }
   return out;

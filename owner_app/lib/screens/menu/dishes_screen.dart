@@ -86,6 +86,7 @@ class _DishesScreenState extends State<DishesScreen> {
                         Expanded(
                           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                             Text('${d['name']}', style: const TextStyle(fontWeight: FontWeight.w700)),
+                            if ((d['name_kn'] ?? '').toString().isNotEmpty) Text('${d['name_kn']}'),
                             Text(
                               [
                                 'Used ${d['times_used']} time(s)',

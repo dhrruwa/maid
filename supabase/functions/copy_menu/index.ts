@@ -57,6 +57,7 @@ handle(async (body) => {
         slot,
         dish_id: d.dish_id,
         notes: d.notes,
+        notes_kn: d.notes_kn,
         sort_order: i,
       }))));
       copied.push({ date, slot });

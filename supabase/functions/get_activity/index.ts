@@ -257,6 +257,11 @@ handle(async (body) => {
 
   // Hide noisy internal rows (FCM token refreshes, pairing token bookkeeping).
   const visible = rows.filter((r) => {
+    // Kannada copies filled in afterwards (the owner's own corrections stay visible).
+    if (r.action === "update" && r.actor !== "owner") {
+      const ch = changes(r.old_value, r.new_value);
+      if (ch.length && ch.every((k) => k.endsWith("_kn"))) return false;
+    }
     if (r.entity_type === "pairing_tokens" && r.action === "update") return false;
     if (r.action === "update" && (r.entity_type === "house" || r.entity_type === "cook_device")) {
       const ch = changes(r.old_value, r.new_value);

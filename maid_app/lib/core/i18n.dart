@@ -30,6 +30,16 @@ class L {
   static String get code => lang.value;
   static bool get isKannada => lang.value == 'kn';
 
+  /// Text the owner or family typed (a dish name, a note). In Kannada the
+  /// server's Kannada copy (`name` → `name_kn`) is shown when there is one.
+  static String typed(Object? m, String key) {
+    if (m is! Map) return '';
+    final kn = m['${key}_kn'];
+    if (isKannada && kn is String && kn.trim().isNotEmpty) return kn.trim();
+    final v = m[key];
+    return v == null ? '' : '$v'.trim();
+  }
+
   /// t('hello', {'name': 'Lakshmi'})
   static String t(String key, [Map<String, Object?> params = const {}]) {
     var s = _strings[lang.value]?[key] ?? _strings['en']?[key] ?? key;

@@ -170,7 +170,7 @@ class _PastMenusState extends State<_PastMenus> with CachedLoad {
               for (final it in items)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 3),
-                  child: Text('• ${it['name']}', style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w600)),
+                  child: Text('• ${L.typed(it, 'name')}', style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w600)),
                 ),
           ]),
         ),

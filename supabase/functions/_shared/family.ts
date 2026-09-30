@@ -98,6 +98,8 @@ export function bookableDate(date: string, today: string): boolean {
 export interface Person {
   name: string;
   note: string | null;
+  name_kn: string | null;
+  note_kn: string | null;
 }
 
 export interface Bookings {
@@ -111,8 +113,11 @@ interface BookingRow {
   date: string;
   slot: Slot;
   note: string | null;
-  members: { name: string } | { name: string }[] | null;
+  note_kn: string | null;
+  members: MemberName | MemberName[] | null;
 }
+
+type MemberName = { name: string; name_kn: string | null };
 
 export interface SlotBookings extends Bookings {
   /** member_id → that member's booking note (only members who booked). */
@@ -129,7 +134,7 @@ export async function bookingsFor(
   to: string,
 ): Promise<Map<string, Record<Slot, SlotBookings>>> {
   const rows = must(
-    await sb.from("meal_bookings").select("id,member_id,date,slot,note,members(name)")
+    await sb.from("meal_bookings").select("id,member_id,date,slot,note,note_kn,members(name,name_kn)")
       .eq("house_id", houseId).is("cancelled_at", null)
       .gte("date", from).lte("date", to),
   ) as BookingRow[];
@@ -138,7 +143,7 @@ export async function bookingsFor(
     if (!out.has(r.date)) out.set(r.date, { morning: emptySlot(), evening: emptySlot() });
     const m = Array.isArray(r.members) ? r.members[0] : r.members;
     const s = out.get(r.date)![r.slot];
-    s.people.push({ name: m?.name ?? "?", note: r.note });
+    s.people.push({ name: m?.name ?? "?", note: r.note, name_kn: m?.name_kn ?? null, note_kn: r.note_kn });
     s.byMember.set(r.member_id, r.note);
     s.count++;
   }

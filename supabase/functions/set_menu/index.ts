@@ -8,6 +8,7 @@ import { ownerCtx } from "../_shared/auth.ts";
 import { cleanYoutube, notifyMenuChange, offSlots } from "../_shared/menu.ts";
 import { menuFor, Slot } from "../_shared/pay.ts";
 import { isValidDate } from "../_shared/time.ts";
+import { toKannada } from "../_shared/translate.ts";
 
 handle(async (body) => {
   requireFields(body, "date", "slot");
@@ -27,12 +28,18 @@ handle(async (body) => {
     }
   }
 
+  const noteOf = (it: Record<string, unknown>) => (it.notes ? String(it.notes).slice(0, 300) : null);
+  const nameOf = (it: Record<string, unknown>) => String(it.name ?? "").trim().slice(0, 80);
+  const srcs = items.flatMap((it: Record<string, unknown>) => [it.dish_id ? null : nameOf(it), noteOf(it)]);
+  const knList = await toKannada(sb, srcs);
+  const kn = new Map<string, string | null>(srcs.map((s: string | null, i: number) => [s ?? "", knList[i]]));
+
   // Resolve every item to a dish id.
-  const wanted: { dish_id: string; notes: string | null }[] = [];
+  const wanted: { dish_id: string; notes: string | null; notes_kn: string | null }[] = [];
   for (const it of items) {
     let dishId = it.dish_id as string | undefined;
     if (!dishId) {
-      const name = String(it.name ?? "").trim().slice(0, 80);
+      const name = nameOf(it);
       if (!name) throw new AppError("MISSING_FIELD", "Dish name is required");
       const yt = cleanYoutube(it.youtube_url);
       const found = must(
@@ -46,7 +53,8 @@ handle(async (body) => {
         }
       } else {
         dishId = must(
-          await sb.from("dishes").insert({ house_id: house.id, name, youtube_url: yt }).select("id").single(),
+          await sb.from("dishes").insert({ house_id: house.id, name, name_kn: kn.get(name) ?? null, youtube_url: yt })
+            .select("id").single(),
         ).id as string;
       }
     } else {
@@ -55,13 +63,14 @@ handle(async (body) => {
       );
       if (!ok) throw new AppError("NOT_FOUND", "Dish not found");
     }
-    wanted.push({ dish_id: dishId!, notes: it.notes ? String(it.notes).slice(0, 300) : null });
+    const notes = noteOf(it);
+    wanted.push({ dish_id: dishId!, notes, notes_kn: notes ? kn.get(notes) ?? null : null });
   }
 
   const current = must(
-    await sb.from("menu").select("id,dish_id,notes,sort_order").eq("house_id", house.id)
+    await sb.from("menu").select("id,dish_id,notes,notes_kn,sort_order").eq("house_id", house.id)
       .eq("date", date).eq("slot", slot).is("deleted_at", null).order("sort_order"),
-  ) as { id: string; dish_id: string; notes: string | null; sort_order: number }[];
+  ) as { id: string; dish_id: string; notes: string | null; notes_kn: string | null; sort_order: number }[];
 
   let changed = false;
   const keep = new Set<string>();
@@ -71,8 +80,11 @@ handle(async (body) => {
     if (match) {
       keep.add(match.id);
       if (match.notes !== w.notes || match.sort_order !== i) {
-        must(await sb.from("menu").update({ notes: w.notes, sort_order: i }).eq("id", match.id));
+        must(await sb.from("menu").update({ notes: w.notes, notes_kn: w.notes_kn, sort_order: i }).eq("id", match.id));
         changed = true;
+      } else if (w.notes_kn && match.notes_kn !== w.notes_kn) {
+        // Same note, Kannada copy missing or corrected since: not a menu change.
+        must(await sb.from("menu").update({ notes_kn: w.notes_kn }).eq("id", match.id));
       }
     } else {
       must(await sb.from("menu").insert({
@@ -81,6 +93,7 @@ handle(async (body) => {
         slot,
         dish_id: w.dish_id,
         notes: w.notes,
+        notes_kn: w.notes_kn,
         sort_order: i,
       }));
       changed = true;

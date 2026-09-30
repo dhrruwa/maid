@@ -14,6 +14,7 @@ import { Ctx, ownerCtx } from "../_shared/auth.ts";
 import { isPin, nameKey, pinHash, pinOf, slotCutoffMs, validName } from "../_shared/family.ts";
 import { Slot } from "../_shared/pay.ts";
 import { nowIst } from "../_shared/time.ts";
+import { kannadaOf } from "../_shared/translate.ts";
 
 interface Row {
   id: string;
@@ -85,7 +86,13 @@ handle(async (body) => {
     await assertNameFree(ctx, name);
     const id = crypto.randomUUID();
     member = await write(
-      sb.from("members").insert({ id, house_id: house.id, name, pin_hash: await pinHash(id, pin) })
+      sb.from("members").insert({
+        id,
+        house_id: house.id,
+        name,
+        name_kn: await kannadaOf(sb, name),
+        pin_hash: await pinHash(id, pin),
+      })
         .select(COLS).single(),
       name,
     );
@@ -110,7 +117,7 @@ handle(async (body) => {
           break;
         }
         await assertNameFree(ctx, name, id);
-        member = await update({ name }, name);
+        member = await update({ name, name_kn: await kannadaOf(sb, name) }, name);
         break;
       }
       case "set_pin": {

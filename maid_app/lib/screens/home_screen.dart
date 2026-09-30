@@ -559,20 +559,20 @@ class _SlotMenu extends StatelessWidget {
     } else {
       body = Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         for (final it in items) ...[
-          Text('${it['name']}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
-          for (final n in [it['notes'], it['dish_notes']])
-            if (n != null && '$n'.isNotEmpty)
+          Text(L.typed(it, 'name'), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+          for (final n in [L.typed(it, 'notes'), L.typed(it, 'dish_notes')])
+            if (n.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 2),
                 child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   const Icon(Icons.sticky_note_2_outlined, size: 20),
                   const SizedBox(width: 6),
-                  Expanded(child: Text('$n', style: const TextStyle(fontSize: 17))),
+                  Expanded(child: Text(n, style: const TextStyle(fontSize: 17))),
                 ]),
               ),
           if (it['youtube_url'] != null) ...[
             const SizedBox(height: 8),
-            VideoThumb(url: '${it['youtube_url']}', title: '${it['name']}'),
+            VideoThumb(url: '${it['youtube_url']}', title: L.typed(it, 'name')),
             TextButton.icon(
               onPressed: () => openInYoutube('${it['youtube_url']}'),
               icon: const Icon(Icons.open_in_new_rounded),
@@ -670,9 +670,8 @@ class _Bookings extends StatelessWidget {
               Expanded(
                 child: Text.rich(
                   TextSpan(children: [
-                    TextSpan(text: '${p['name']}'.trim(), style: const TextStyle(fontWeight: FontWeight.w800)),
-                    if (p['note'] != null && '${p['note']}'.trim().isNotEmpty)
-                      TextSpan(text: ' – ${'${p['note']}'.trim()}'),
+                    TextSpan(text: L.typed(p, 'name'), style: const TextStyle(fontWeight: FontWeight.w800)),
+                    if (L.typed(p, 'note').isNotEmpty) TextSpan(text: ' – ${L.typed(p, 'note')}'),
                   ]),
                   style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
                 ),

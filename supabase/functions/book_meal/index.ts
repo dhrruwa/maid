@@ -13,6 +13,7 @@ import { BOOK_AHEAD_DAYS, bookableDate, cleanNote, memberDays, slotCutoffMs } fr
 import { offSlots } from "../_shared/menu.ts";
 import { Slot } from "../_shared/pay.ts";
 import { addDays, isValidDate, nowIst } from "../_shared/time.ts";
+import { kannadaOf } from "../_shared/translate.ts";
 
 handle(async (body) => {
   requireFields(body, "date", "slot", "book");
@@ -47,8 +48,9 @@ handle(async (body) => {
   const active = () =>
     sb.from("meal_bookings").select("id,note").eq("member_id", member.id).eq("date", date)
       .eq("slot", slot).is("cancelled_at", null).maybeSingle();
-  const setNote = (id: string, note: string | null) =>
-    sb.from("meal_bookings").update({ note }).eq("id", id).is("cancelled_at", null);
+  const setNote = async (id: string, note: string | null) =>
+    await sb.from("meal_bookings").update({ note, note_kn: await kannadaOf(sb, note) }).eq("id", id)
+      .is("cancelled_at", null);
 
   const existing = must(await active()) as { id: string; note: string | null } | null;
   const hasNote = Object.prototype.hasOwnProperty.call(body, "note");
@@ -59,7 +61,7 @@ handle(async (body) => {
       if (hasNote && existing.note !== note) must(await setNote(existing.id, note));
     } else {
       const ins = await sb.from("meal_bookings")
-        .insert({ house_id: house.id, member_id: member.id, date, slot, note });
+        .insert({ house_id: house.id, member_id: member.id, date, slot, note, note_kn: await kannadaOf(sb, note) });
       if (ins.error?.code === "23505") {
         // Booked by a parallel request (double tap): keep it, apply the note.
         const again = must(await active()) as { id: string; note: string | null } | null;

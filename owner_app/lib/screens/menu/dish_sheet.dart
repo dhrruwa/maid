@@ -86,7 +86,10 @@ class _DishPickerState extends State<_DishPicker> with SingleTickerProviderState
                                     )
                                   : const Icon(Icons.restaurant_rounded),
                               title: Text('${d['name']}'),
-                              subtitle: Text('Used ${d['times_used']} time(s)'),
+                              subtitle: Text([
+                                if ((d['name_kn'] ?? '').toString().isNotEmpty) '${d['name_kn']}',
+                                'Used ${d['times_used']} time(s)',
+                              ].join(' · ')),
                               trailing: const Icon(Icons.add_circle_outline),
                               onTap: () => Navigator.pop(context, {
                                 'dish_id': d['id'],
@@ -148,7 +151,11 @@ class _NewDishFormState extends State<_NewDishForm> {
         TextField(
           controller: _name,
           textCapitalization: TextCapitalization.words,
-          decoration: const InputDecoration(labelText: 'Dish name', hintText: 'e.g. Palak Paneer'),
+          decoration: const InputDecoration(
+            labelText: 'Dish name',
+            hintText: 'e.g. Palak Paneer',
+            helperText: 'The cook sees it in Kannada automatically; fix it later in My dishes',
+          ),
           onChanged: (_) => setState(() {}),
         ),
         const SizedBox(height: 12),
@@ -199,6 +206,10 @@ Future<bool> showEditDish(BuildContext context, Map<String, dynamic> dish) async
   final name = TextEditingController(text: '${dish['name']}');
   final yt = TextEditingController(text: '${dish['youtube_url'] ?? ''}');
   final notes = TextEditingController(text: '${dish['notes'] ?? ''}');
+  final nameKnWas = '${dish['name_kn'] ?? ''}';
+  final notesKnWas = '${dish['notes_kn'] ?? ''}';
+  final nameKn = TextEditingController(text: nameKnWas);
+  final notesKn = TextEditingController(text: notesKnWas);
   final ok = await showDialog<bool>(
     context: context,
     builder: (c) => StatefulBuilder(
@@ -206,17 +217,30 @@ Future<bool> showEditDish(BuildContext context, Map<String, dynamic> dish) async
         final bad = yt.text.trim().isNotEmpty && youtubeId(yt.text) == null;
         return AlertDialog(
           title: const Text('Edit dish'),
-          content: Column(mainAxisSize: MainAxisSize.min, children: [
-            TextField(controller: name, decoration: const InputDecoration(labelText: 'Name')),
-            const SizedBox(height: 10),
-            TextField(
-              controller: yt,
-              decoration: InputDecoration(labelText: 'YouTube link', errorText: bad ? 'Not a YouTube link' : null),
-              onChanged: (_) => set(() {}),
-            ),
-            const SizedBox(height: 10),
-            TextField(controller: notes, decoration: const InputDecoration(labelText: 'Notes')),
-          ]),
+          content: SingleChildScrollView(
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              TextField(controller: name, decoration: const InputDecoration(labelText: 'Name')),
+              const SizedBox(height: 10),
+              TextField(
+                controller: yt,
+                decoration: InputDecoration(labelText: 'YouTube link', errorText: bad ? 'Not a YouTube link' : null),
+                onChanged: (_) => set(() {}),
+              ),
+              const SizedBox(height: 10),
+              TextField(controller: notes, decoration: const InputDecoration(labelText: 'Notes')),
+              const SizedBox(height: 16),
+              TextField(
+                controller: nameKn,
+                decoration: const InputDecoration(
+                  labelText: 'Name in Kannada (for the cook)',
+                  helperText: 'Translated automatically. Correct it here, or clear it to translate again.',
+                  helperMaxLines: 3,
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(controller: notesKn, decoration: const InputDecoration(labelText: 'Notes in Kannada')),
+            ]),
+          ),
           actions: [
             TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancel')),
             FilledButton(onPressed: bad ? null : () => Navigator.pop(c, true), child: const Text('Save')),
@@ -231,6 +255,9 @@ Future<bool> showEditDish(BuildContext context, Map<String, dynamic> dish) async
         'name': name.text.trim(),
         'youtube_url': yt.text.trim(),
         'notes': notes.text.trim(),
+        // Only a Kannada the owner changed is sent; otherwise the server translates.
+        if (nameKn.text.trim() != nameKnWas) 'name_kn': nameKn.text.trim(),
+        if (notesKn.text.trim() != notesKnWas) 'notes_kn': notesKn.text.trim(),
       }), success: 'Dish saved');
   return r != null;
 }
