@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 
 import '../core/api.dart';
 import '../core/device.dart';
+import '../core/push.dart';
 import '../core/theme.dart';
 import '../core/youtube.dart';
 import '../widgets/common.dart';
@@ -40,6 +41,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   /// Slots ('date|slot') whose booking is on its way to the server.
   final _busy = <String>{};
   Timer? _clock;
+  StreamSubscription<Object?>? _push;
 
   @override
   void initState() {
@@ -52,12 +54,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     _clock = Timer.periodic(const Duration(seconds: 30), (_) {
       if (mounted) setState(() {});
     });
+    // A menu changed while the app is open: show it.
+    _push = Push.foreground.listen((_) => _load());
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _clock?.cancel();
+    _push?.cancel();
     super.dispose();
   }
 

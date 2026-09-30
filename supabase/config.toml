@@ -111,6 +111,9 @@ verify_jwt = false
 [functions.get_timeline]
 verify_jwt = false
 
+[functions.family_notify]
+verify_jwt = false
+
 [functions.get_ui]
 verify_jwt = false
 

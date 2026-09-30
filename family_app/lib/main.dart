@@ -4,11 +4,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'config.dart';
 import 'core/api.dart';
 import 'core/device.dart';
+import 'core/push.dart';
 import 'core/theme.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
 
 final navKey = GlobalKey<NavigatorState>();
+final messengerKey = GlobalKey<ScaffoldMessengerState>();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,6 +20,16 @@ Future<void> main() async {
   }
   // The owner removed this member or reset their PIN: back to the login.
   Api.signedOut.addListener(_backToLogin);
+  await Push.init();
+  // While the app is open the phone shows no banner: show it in the app.
+  Push.foreground.listen((m) {
+    final n = m.notification;
+    if (n == null) return;
+    messengerKey.currentState?.showSnackBar(SnackBar(
+      behavior: SnackBarBehavior.floating,
+      content: Text('${n.title ?? ''}\n${n.body ?? ''}'.trim()),
+    ));
+  });
   runApp(const FamilyApp());
 }
 
@@ -41,6 +53,7 @@ class FamilyApp extends StatelessWidget {
       title: 'Family',
       debugShowCheckedModeBanner: false,
       navigatorKey: navKey,
+      scaffoldMessengerKey: messengerKey,
       theme: buildTheme(),
       themeMode: ThemeMode.light,
       home: Device.loggedIn ? const HomeScreen() : const LoginScreen(),

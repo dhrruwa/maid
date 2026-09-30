@@ -1,7 +1,7 @@
 name: cook_family
 description: "Family: see the menu and book your meals."
 publish_to: 'none'
-version: 1.0.0+2
+version: 1.0.0+3
 
 environment:
   sdk: ^3.13.4
@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  firebase_core: ^4.15.0
+  firebase_messaging: ^16.7.0
   http: ^1.6.0
   intl: ^0.20.3
   shared_preferences: ^2.5.5

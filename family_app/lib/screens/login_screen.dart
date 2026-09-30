@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../core/api.dart';
 import '../core/device.dart';
+import '../core/push.dart';
 import '../core/theme.dart';
 import '../widgets/common.dart';
 import '../widgets/glass.dart';
@@ -63,6 +64,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ApiCache.clear();
       await Device.saveLogin(memberId: id, name: '${member['name'] ?? name}', houseName: '${res['house_name'] ?? ''}');
       if (!mounted) return;
+      Push.syncToken();
       Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const HomeScreen()), (_) => false);
     } on ApiError catch (e) {
       if (!mounted) return;
