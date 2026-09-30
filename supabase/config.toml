@@ -96,6 +96,9 @@ verify_jwt = false
 [functions.set_menu]
 verify_jwt = false
 
+[functions.test_notifications]
+verify_jwt = false
+
 [functions.unpair_cook]
 verify_jwt = false
 

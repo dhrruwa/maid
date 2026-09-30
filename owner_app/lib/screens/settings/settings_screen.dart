@@ -6,6 +6,7 @@ import '../../core/app_state.dart';
 import '../../core/device.dart';
 import '../../core/export.dart';
 import '../../core/format.dart';
+import '../../core/push.dart';
 import '../../core/theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/pin_pad.dart';
@@ -152,6 +153,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  /// One of every owner notification to this phone. They are sent a few
+  /// seconds later, so there is time to leave the app: inside it they only
+  /// show as snackbars.
+  Future<void> _testNotifications() async {
+    final ok = await confirm(
+        context,
+        'Send test notifications?',
+        'You will get one of each notification this app can show, in about 5 seconds. '
+            'Go to your home screen or lock the phone now to see them as real notifications.',
+        ok: 'Send');
+    if (!ok) return;
+    await Push.syncToken(); // the server needs this phone's current token
+    try {
+      final r = await Api.call('test_notifications', {'delay_seconds': 5});
+      if (mounted) {
+        final all = r['sent'] == r['total'];
+        toast(context, all ? 'Sent ${r['total']} test notifications' : 'Sent ${r['sent']} of ${r['total']}; some failed');
+      }
+    } catch (e) {
+      if (mounted) toast(context, '$e', error: true);
+    }
+  }
+
   /// "3 people · 2 phones linked", from the saved members list.
   String _membersLine() {
     final m = parseMembers(Api.cached('manage_members', body: membersListBody));
@@ -267,6 +291,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
           toggle('notify_payday', Icons.payments_rounded, 'Salary due', 'On the 1st, and a reminder on the 4th'),
           toggle('notify_menu', Icons.restaurant_menu_rounded, 'Tell the cook about menu changes',
               'Sends her today\'s/tomorrow\'s menu when you change it'),
+          if (AppConfig.firebaseConfigured)
+            ListTile(
+              leading: const Icon(Icons.notifications_active_rounded),
+              title: const Text('Send test notifications'),
+              subtitle: const Text('One of each kind to this phone, to check they arrive'),
+              onTap: _testNotifications,
+            ),
           if (!AppConfig.firebaseConfigured)
             const Padding(
               padding: EdgeInsets.fromLTRB(16, 0, 16, 12),
