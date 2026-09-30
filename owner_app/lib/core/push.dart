@@ -28,14 +28,32 @@ class Push {
       );
       final fm = FirebaseMessaging.instance;
       await fm.requestPermission();
-      token = await fm.getToken();
       fm.onTokenRefresh.listen((t) {
         token = t;
         syncToken();
       });
       FirebaseMessaging.onMessage.listen(_foreground.add);
+      // Not awaited: on iPhone this can take seconds, and startup must not wait.
+      unawaited(_fetchToken(fm));
     } catch (e) {
       debugPrint('Push disabled: $e');
+    }
+  }
+
+  /// On iPhone, Firebase can only hand out a token after Apple has given the
+  /// phone its push token, which arrives a few seconds after launch. Asking
+  /// earlier fails, and nothing would ask again.
+  static Future<void> _fetchToken(FirebaseMessaging fm) async {
+    try {
+      if (Platform.isIOS) {
+        for (var i = 0; i < 30 && await fm.getAPNSToken() == null; i++) {
+          await Future.delayed(const Duration(seconds: 1));
+        }
+      }
+      token = await fm.getToken();
+      await syncToken();
+    } catch (e) {
+      debugPrint('Push token not available: $e');
     }
   }
 
