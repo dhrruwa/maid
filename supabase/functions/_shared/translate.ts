@@ -1,12 +1,15 @@
 // English → Kannada for the Maid app. Text is translated once, when it is
-// saved, and cached in `translations`. Google's free web endpoint is used
-// first (it gets names and Karnataka dishes right: "Ragi mudde" → ರಾಗಿ ಮುದ್ದೆ);
-// MyMemory's machine translation is the fallback. Its shared memory also
-// holds user-submitted junk ("Ramesh" → a birthday greeting), so only its
-// "MT!" answers are used. Never throws: null means "show the English".
+// saved, and cached in `translations`. Gemini (GEMINI_API_KEY secret) does it
+// first: it writes what a cook would say ("no onion" → ಈರುಳ್ಳಿ ಹಾಕಬೇಡಿ,
+// "Set Dosa" → ಸೆಟ್ ದೋಸೆ). If it is slow, busy or unset, Google's free web
+// endpoint takes over, then MyMemory's machine translation. MyMemory's shared
+// memory also holds user-submitted junk ("Ramesh" → a birthday greeting), so
+// only its "MT!" answers are used. Never throws: null means "show the English".
 import { SupabaseClient } from "jsr:@supabase/supabase-js@2";
 
 const TIMEOUT_MS = 2500;
+const GEMINI_MODEL = "gemini-flash-lite-latest"; // ~1 s; the 3.x names were 2–4 s or busy
+const GEMINI_TIMEOUT_MS = 4000;
 const KANNADA = /[ಀ-೿]/;
 const LATIN = /[A-Za-z]/;
 
@@ -14,6 +17,39 @@ async function fetchJson(url: string): Promise<unknown> {
   const res = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return await res.json();
+}
+
+/** Several texts in one request; a null for any item it could not do. */
+async function gemini(texts: string[]): Promise<(string | null)[]> {
+  const key = Deno.env.get("GEMINI_API_KEY");
+  if (!key || !texts.length) return texts.map(() => null);
+  try {
+    const prompt = "Translate each English item for a Kannada-speaking home cook in Karnataka into " +
+      "natural Kannada script. Dish names: write the name Kannada cooks use (transliterate when " +
+      "there is no Kannada word, e.g. 'Set Dosa' -> 'ಸೆಟ್ ದೋಸೆ'). People's names: write them in " +
+      "Kannada script. Return only a JSON array of strings, same order and length.\n" +
+      JSON.stringify(texts);
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": key },
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: [{ text: prompt }] }],
+          generationConfig: { responseMimeType: "application/json", temperature: 0 },
+        }),
+        signal: AbortSignal.timeout(GEMINI_TIMEOUT_MS),
+      },
+    );
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const d = await res.json();
+    const out = JSON.parse(d?.candidates?.[0]?.content?.parts?.[0]?.text ?? "null");
+    if (!Array.isArray(out) || out.length !== texts.length) throw new Error("bad reply shape");
+    return out.map((k) => (typeof k === "string" && KANNADA.test(k) ? k.trim().slice(0, 600) : null));
+  } catch (e) {
+    console.warn(`translate (gemini) failed: ${e}`);
+    return texts.map(() => null);
+  }
 }
 
 async function google(text: string): Promise<string | null> {
@@ -58,7 +94,8 @@ export async function toKannada(sb: SupabaseClient, texts: unknown[]): Promise<(
     const { data } = await sb.from("translations").select("en,kn").in("en", need);
     for (const r of (data ?? []) as { en: string; kn: string }[]) found.set(r.en, r.kn);
     const missing = need.filter((t) => !found.has(t));
-    const fresh = await Promise.all(missing.map(translateOne));
+    const byGemini = await gemini(missing);
+    const fresh = await Promise.all(missing.map((t, i) => byGemini[i] ?? translateOne(t)));
     const rows = missing.map((en, i) => ({ en, kn: fresh[i] })).filter((r) => r.kn) as { en: string; kn: string }[];
     for (const r of rows) found.set(r.en, r.kn);
     // A cache miss is not an error: the next save simply translates again.

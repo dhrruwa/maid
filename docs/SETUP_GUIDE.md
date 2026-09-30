@@ -36,6 +36,7 @@ Supabase dashboard → **Edge Functions → Secrets** → add:
 |---|---|
 | `CRON_SECRET` | any long random text, e.g. from `openssl rand -hex 24`. It protects the scheduled functions. |
 | `FIREBASE_SERVICE_ACCOUNT` | the **whole JSON file** from Firebase (step 5.4). Until this is set, the app works without push notifications. |
+| `GEMINI_API_KEY` | optional: a Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey). It translates dish names and notes into Kannada for the Maid app. Without it a free Google web translator is used, which is worse with dish names ("Set Dosa" becomes "set the dosa"). |
 
 (Command-line alternative: `npx supabase secrets set CRON_SECRET=... --project-ref YOUR_PROJECT_REF`.)
 
