@@ -40,14 +40,33 @@ class L {
     return v == null ? '' : '$v'.trim();
   }
 
+  /// Text overrides from the server (ServerUi), {"en": {key: text}, "kn": …}:
+  /// fix or change the app's wording without a new build.
+  static final _server = <String, Map<String, String>>{};
+
+  static void setOverrides(Object? strings) {
+    _server.clear();
+    if (strings is! Map) return;
+    strings.forEach((code, m) {
+      if (m is Map) {
+        _server['$code'] = {
+          for (final e in m.entries)
+            if (e.value is String && (e.value as String).trim().isNotEmpty) '${e.key}': e.value as String,
+        };
+      }
+    });
+  }
+
+  static String? _find(String code, String key) => _server[code]?[key] ?? _strings[code]?[key];
+
   /// t('hello', {'name': 'Lakshmi'})
   static String t(String key, [Map<String, Object?> params = const {}]) {
-    var s = _strings[lang.value]?[key] ?? _strings['en']?[key] ?? key;
+    var s = _find(lang.value, key) ?? _find('en', key) ?? key;
     params.forEach((k, v) => s = s.replaceAll('{$k}', '$v'));
     return s;
   }
 
-  static bool has(String key) => _strings['en']?.containsKey(key) ?? false;
+  static bool has(String key) => _find('en', key) != null;
 
   static String slot(String s) => t(s == 'morning' ? 'morning' : s == 'evening' ? 'evening' : 'full_day');
 

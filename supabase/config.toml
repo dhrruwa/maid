@@ -108,6 +108,9 @@ verify_jwt = false
 [functions.get_timeline]
 verify_jwt = false
 
+[functions.get_ui]
+verify_jwt = false
+
 [functions.manage_members]
 verify_jwt = false
 

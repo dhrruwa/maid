@@ -217,6 +217,13 @@ The last days as a timeline: scan times, missed visits (gaps), holidays and leav
 ```
 `state` takes the same values as in `get_month_summary`.
 
+## get_ui
+The server-driven UI bundle: which blocks Home shows and text overrides. See [SDUI.md](SDUI.md). Called alongside the Home load. The reply is saved on the phone, so a failure (offline, or the function not deployed yet) just keeps the saved or built-in layout.
+
+**Input:** `{ device_id, schema }`. `schema` is the newest block schema the app understands (`ServerUi.schema`, now 1).
+
+**Returns:** `{ ui: { id, schema, screens: { home: { blocks: [ … ] } }, strings: { en: { … }, kn: { … } } } }`, or `{ ui: null }` to use the built-in layout. `ui` is the newest active `public.app_ui` row for this house, otherwise the newest global row, whose `schema` is at most the app's.
+
 ## update_device
 Send this when the FCM token refreshes or she switches language.
 

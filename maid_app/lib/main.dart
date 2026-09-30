@@ -6,10 +6,12 @@ import 'config.dart';
 import 'core/device.dart';
 import 'core/i18n.dart';
 import 'core/offline_queue.dart';
+import 'core/ota.dart';
 import 'core/push.dart';
 import 'core/theme.dart';
 import 'screens/home_screen.dart';
 import 'screens/pairing_screen.dart';
+import 'sdui/server_ui.dart';
 
 final messengerKey = GlobalKey<ScaffoldMessengerState>();
 final navKey = GlobalKey<NavigatorState>();
@@ -18,6 +20,8 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Device.init();
   await L.init();
+  ServerUi.load(); // saved layout + text overrides, before the first frame
+  await Ota.init();
   if (AppConfig.supabaseConfigured) {
     await Supabase.initialize(url: AppConfig.supabaseUrl, publishableKey: AppConfig.supabaseAnonKey);
   }

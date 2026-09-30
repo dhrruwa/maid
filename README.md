@@ -12,11 +12,13 @@ Two Flutter apps and a Supabase backend for tracking a home cook's attendance, s
 |---|---|---|
 | Owner app – **Owner** | `owner_app/` | Android, iPhone |
 | Maid app – **Maid** (English + ಕನ್ನಡ) | `maid_app/` | Android, iPhone |
-| Backend – Postgres schema, triggers, RLS, 34 Edge Functions, cron | `supabase/` | Supabase |
+| Backend – Postgres schema, triggers, RLS, 40 Edge Functions, cron | `supabase/` | Supabase |
 
 - **Setup, build and install steps:** [docs/SETUP_GUIDE.md](docs/SETUP_GUIDE.md)
 - **Edge Function API (maid app):** [docs/API.md](docs/API.md)
 - **Mobbin UI references:** [docs/mobbin_references.md](docs/mobbin_references.md)
+- **Maid app over-the-air updates (Shorebird):** [docs/OTA.md](docs/OTA.md)
+- **Maid app server-driven Home (layout, notices, wording from the database):** [docs/SDUI.md](docs/SDUI.md)
 - **Colours and glass style:** [docs/COLOR_PALETTE.md](docs/COLOR_PALETTE.md)
 - **Logos and icons:** `branding/` (SVG sources); generated into each app's `assets/icon/`
 - **Original build prompts:** `owner_app_prompt_4.md`, `maid_app_prompt_4.md`

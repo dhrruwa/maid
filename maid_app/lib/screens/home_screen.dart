@@ -7,7 +7,10 @@ import '../core/api.dart';
 import '../core/device.dart';
 import '../core/i18n.dart';
 import '../core/offline_queue.dart';
+import '../core/ota.dart';
 import '../core/theme.dart';
+import '../sdui/blocks.dart';
+import '../sdui/server_ui.dart';
 import '../widgets/common.dart';
 import '../widgets/motion.dart';
 import '../widgets/video.dart';
@@ -19,6 +22,8 @@ import 'scan_flow.dart';
 
 /// Home: salary card → today → big Scan QR → what to cook → Request leave / My history.
 /// (Reference: Sweatcoin home – one big number, one dominant action.)
+/// Which of these show, in which order, and any notices between them come
+/// from the server (ServerUi, docs/SDUI.md); the built-in order is above.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -53,6 +58,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     HomeScreen._tick.addListener(_load);
+    ServerUi.changes.addListener(_onUi);
     _uploads = OfflineQueue.results.listen(_showUploads);
     _pendingSub = OfflineQueue.changes.listen((_) => mounted ? setState(() {}) : null);
     _readCache();
@@ -63,6 +69,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     HomeScreen._tick.removeListener(_load);
+    ServerUi.changes.removeListener(_onUi);
     _uploads?.cancel();
     _pendingSub?.cancel();
     super.dispose();
@@ -73,8 +80,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     if (s == AppLifecycleState.resumed) {
       OfflineQueue.sync();
       _load();
+      Ota.check();
     }
   }
+
+  void _onUi() => mounted ? setState(() {}) : null;
 
   void _readCache() {
     final raw = Device.prefs.getString('home_cache');
@@ -95,6 +105,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
     _loading = true;
     _reloadQueued = false;
+    // Layout alongside the data, not in its way: when it changes, _onUi
+    // redraws; when it fails, the saved or built-in layout stays.
+    ServerUi.refresh().ignore();
     try {
       final res = await Future.wait([
         Api.call('get_live_salary'),
@@ -176,38 +189,46 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     _load();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final name = Device.name;
-    final sections = _salary == null
-        ? const <Widget>[]
-        : <Widget>[
-            if (OfflineQueue.count > 0)
-              _Banner(
+  /// Home's own blocks. Each may take props from the server (docs/SDUI.md);
+  /// a builder returns null when there is nothing to show right now.
+  UiRenderer get _renderer => UiRenderer({
+        'offline_banner': (_, _) => OfflineQueue.count > 0
+            ? _Banner(
                 icon: Icons.cloud_upload_rounded,
                 color: StatusColors.wait,
                 text: L.t('offline_pending', {'count': OfflineQueue.count}),
-              ),
-            if (_fromCache || _error != null)
-              _Banner(icon: Icons.wifi_off_rounded, color: StatusColors.grey, text: L.t('showing_saved')),
-            _SalaryCard(s: _salary!, bump: _bump),
-            if (_salary!['today_info'] != null) _TodayCard(day: Map<String, dynamic>.from(_salary!['today_info'])),
-            BigButton(
+              )
+            : null,
+        'saved_banner': (_, _) => _fromCache || _error != null
+            ? _Banner(icon: Icons.wifi_off_rounded, color: StatusColors.grey, text: L.t('showing_saved'))
+            : null,
+        'salary_card': (_, _) => _SalaryCard(s: _salary!, bump: _bump),
+        'today_card': (_, _) => _salary!['today_info'] is Map
+            ? _TodayCard(day: Map<String, dynamic>.from(_salary!['today_info']))
+            : null,
+        'scan_button': (context, b) => BigButton(
               icon: Icons.qr_code_scanner_rounded,
-              label: L.t('scan_qr'),
-              height: 92,
+              label: b.text('label') ?? L.t('scan_qr'),
+              height: (b.number('height') ?? 92).clamp(64, 140).toDouble(),
               onPressed: () => startScan(context),
             ),
-            _CookCard(
+        'cook_card': (_, _) => _CookCard(
               tab: _tab,
               onTab: (t) => setState(() => _tab = t),
               today: _menuToday,
               tomorrow: _menuTomorrow,
             ),
-            // Rebuilt after every reload so a new scan shows up straight away.
-            WeekTimeline(key: ValueKey(_loads)),
-            const _MoreButtons(),
-          ];
+        // Rebuilt after every reload so a new scan shows up straight away.
+        'week_timeline': (_, _) => WeekTimeline(key: ValueKey(_loads)),
+        'more_buttons': (_, _) => const _MoreButtons(),
+      });
+
+  @override
+  Widget build(BuildContext context) {
+    final name = Device.name;
+    final sections = _salary == null
+        ? const <Widget>[]
+        : _renderer.build(context, ServerUi.blocks('home', required: const {'scan_button'}));
     return Scaffold(
       appBar: AppBar(
         title: Text(name.isEmpty ? L.t('app_title') : L.t('hello', {'name': name})),

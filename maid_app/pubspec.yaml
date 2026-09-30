@@ -18,9 +18,11 @@ dependencies:
   http: ^1.6.0
   intl: ^0.20.3
   mobile_scanner: ^7.4.2
+  package_info_plus: ^10.2.1
   printing: ^5.15.1
   share_plus: ^13.3.0
   shared_preferences: ^2.5.5
+  shorebird_code_push: ^2.0.7
   supabase_flutter: ^2.17.2
   url_launcher: ^6.3.2
   youtube_player_flutter: ^10.0.1
