@@ -31,7 +31,7 @@ handle(async (body) => {
 
   const s = body.settings ?? {};
   const settingsPatch: Record<string, unknown> = {};
-  for (const k of ["weekday_rate", "weekend_rate"]) {
+  for (const k of ["weekday_rate", "weekend_rate", "paid_off_rate"]) {
     if (s[k] !== undefined) {
       const v = Number(s[k]);
       if (!Number.isInteger(v) || v < 0 || v > 100000) throw new AppError("BAD_RATE", "Rate must be a whole number");

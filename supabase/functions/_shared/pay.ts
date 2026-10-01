@@ -83,6 +83,7 @@ export interface MonthSummary {
   rates: {
     weekday_rate: number;
     weekend_rate: number;
+    paid_off_rate?: number; // absent on slips frozen before it existed
     morning_start: string;
     morning_end: string;
     evening_start: string;
@@ -235,6 +236,9 @@ export async function computeMonth(
   const slotEndMs = (date: string, slot: Slot) =>
     Date.parse(date + "T00:00:00Z") + (slotWindow(settings, slot)[1] - 330) * 60000;
   const holidays = must(hol) as MonthSummary["holidays"];
+  // A day off the owner pays for (holiday or approved paid leave): a fixed
+  // amount per meal, not the visit rate.
+  const paidOff = settings.paid_off_rate ?? 35;
   const leaves = must(lv) as MonthSummary["leaves"];
   const payment = must(pay) as MonthSummary["payment"];
 
@@ -302,11 +306,11 @@ export async function computeMonth(
         info.state = "not_needed";
       } else if (h) {
         info.state = h.paid ? "holiday_paid" : "holiday_unpaid";
-        info.amount = h.paid ? rate : 0;
+        info.amount = h.paid ? paidOff : 0;
       } else if (approved) {
         const paid = approved.status === "approved_paid";
         info.state = paid ? "leave_paid" : "leave_unpaid";
-        info.amount = paid ? rate : 0;
+        info.amount = paid ? paidOff : 0;
       } else if (date < now.date || (date === now.date && now.minutes >= slotWindow(settings, slot)[1])) {
         info.state = slotEndMs(date, slot) <= trackFromMs ? "none" : "missed";
       } else if (date === now.date) {
@@ -400,6 +404,7 @@ export async function computeMonth(
     rates: {
       weekday_rate: settings.weekday_rate,
       weekend_rate: settings.weekend_rate,
+      paid_off_rate: paidOff,
       morning_start: settings.morning_start,
       morning_end: settings.morning_end,
       evening_start: settings.evening_start,
@@ -444,6 +449,7 @@ export async function liveSalary(ctx: Ctx) {
       weekend_rate: s.rates.weekend_rate,
       weekend_amount: s.totals.weekend_amount,
       paid_off_slots: s.counts.paid_off_slots,
+      paid_off_rate: s.rates.paid_off_rate,
       paid_off_amount: s.totals.paid_off_amount,
       total: s.totals.earned,
     },

@@ -292,7 +292,13 @@ class _SalaryCardState extends State<_SalaryCard> {
           const Divider(height: 24),
           _line('Weekday visits', '${b['weekday_visits']} × ${rupees(b['weekday_rate'])}', b['weekday_amount']),
           _line('Weekend visits', '${b['weekend_visits']} × ${rupees(b['weekend_rate'])}', b['weekend_amount']),
-          _line('Paid holidays / leave', '${b['paid_off_slots']} visit(s)', b['paid_off_amount']),
+          _line(
+            'Paid holidays / leave',
+            b['paid_off_rate'] == null
+                ? '${b['paid_off_slots']} meal(s)'
+                : '${b['paid_off_slots']} × ${rupees(b['paid_off_rate'])}',
+            b['paid_off_amount'],
+          ),
           const Divider(height: 16),
           _line('Total', '', b['total'], bold: true),
         ],

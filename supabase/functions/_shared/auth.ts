@@ -19,6 +19,7 @@ export interface Settings {
   house_id: string;
   weekday_rate: number;
   weekend_rate: number;
+  paid_off_rate: number; // a paid holiday / paid leave, per meal
   morning_start: string;
   morning_end: string;
   evening_start: string;

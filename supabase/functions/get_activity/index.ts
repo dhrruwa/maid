@@ -55,6 +55,7 @@ const slotName = (s: string) => (s === "full" ? "full day" : s);
 const SETTING_LABELS: Record<string, string> = {
   weekday_rate: "weekday rate",
   weekend_rate: "weekend rate",
+  paid_off_rate: "paid holiday / leave rate",
   morning_start: "morning start",
   morning_end: "morning end",
   evening_start: "evening start",

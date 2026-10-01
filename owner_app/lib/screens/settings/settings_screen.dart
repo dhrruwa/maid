@@ -265,6 +265,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onTap: () => _editNumber('Weekend rate (₹ per visit)', 'weekend_rate',
                 current: (s['weekend_rate'] ?? 200) as int, suffix: '₹'),
           ),
+          ListTile(
+            leading: const Icon(Icons.beach_access_outlined),
+            title: const Text('Paid holiday / leave, per meal'),
+            subtitle: Text('Full day = 2 meals = ${rupees(2 * ((s['paid_off_rate'] ?? 35) as int))}'),
+            trailing: Text(rupees(s['paid_off_rate'] ?? 35), style: const TextStyle(fontWeight: FontWeight.w700)),
+            onTap: () => _editNumber('Paid holiday / leave (₹ per meal)', 'paid_off_rate',
+                current: (s['paid_off_rate'] ?? 35) as int, suffix: '₹'),
+          ),
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 0, 16, 12),
             child: Text('New rates apply from the next scan. Paid months never change.', style: TextStyle(fontSize: 12)),

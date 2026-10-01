@@ -59,7 +59,8 @@ export async function buildSlipPdf(s: MonthSummary): Promise<Uint8Array> {
   text(`Cook: ${s.maid_name ?? "-"}`, L, 11);
   y -= 15;
   text(
-    `Rates: weekday Rs.${s.rates.weekday_rate}/visit, weekend Rs.${s.rates.weekend_rate}/visit (morning only)`,
+    `Rates: weekday Rs.${s.rates.weekday_rate}/visit, weekend Rs.${s.rates.weekend_rate}/visit (morning only)` +
+      (s.rates.paid_off_rate !== undefined ? `, paid holiday/leave Rs.${s.rates.paid_off_rate}/meal` : ""),
     L,
     9,
     font,
@@ -101,7 +102,7 @@ export async function buildSlipPdf(s: MonthSummary): Promise<Uint8Array> {
     ["Holidays / leaves (days)", `${c.holidays} / ${c.leaves}`],
     [`Weekday visits x Rs.${s.rates.weekday_rate}`, `${c.weekday_visits} = ${rs(t.weekday_amount)}`],
     [`Weekend visits x Rs.${s.rates.weekend_rate}`, `${c.weekend_visits} = ${rs(t.weekend_amount)}`],
-    ["Paid holidays / leave", `${c.paid_off_slots} = ${rs(t.paid_off_amount)}`],
+    ["Paid holidays / leave", `${c.paid_off_slots} meal(s) = ${rs(t.paid_off_amount)}`],
   ];
   for (const [k, v] of lines) {
     text(k, L, 10);

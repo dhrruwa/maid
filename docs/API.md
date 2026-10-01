@@ -145,7 +145,7 @@ When `off` is set, she doesn't need to come for that slot (holiday, approved lea
     "payday": "2026-10-01", "days_to_payday": 2,
     "breakdown": { "weekday_visits", "weekday_rate", "weekday_amount",
                    "weekend_visits", "weekend_rate", "weekend_amount",
-                   "paid_off_slots", "paid_off_amount", "total" },
+                   "paid_off_slots", "paid_off_rate", "paid_off_amount", "total" },  // paid holiday/leave: paid_off_rate per meal
     "counts": { "visits_done", "missed", "full_days", "half_days", "holidays", "leaves", ... },
     "last_payment": { "month": "2026-08", "total_amount": 2600, "paid_on": "2026-09-01" } | null,
     "today_info": { ...one day object, see get_month_summary }
@@ -160,7 +160,9 @@ When `off` is set, she doesn't need to come for that slot (holiday, approved lea
 ```json
 {
   "month": "2026-09", "house_name", "maid_name", "frozen": false,
-  "rates": { "weekday_rate", "weekend_rate", "morning_start", "morning_end", "evening_start", "evening_end" },
+  "rates": { "weekday_rate", "weekend_rate", "paid_off_rate", "morning_start", "morning_end", "evening_start", "evening_end" },
+  // paid_off_rate: what a paid holiday or approved paid leave pays per meal (default 35; a full day = 2 meals).
+  // Missing on slips frozen before it existed.
   "days": [ {
       "date": "2026-09-29", "dow": 2,
       "status": "green|yellow|red|blue|purple|grey|none",
