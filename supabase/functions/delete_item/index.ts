@@ -28,5 +28,11 @@ handle(async (body) => {
       kn: { title: "ರಜೆ ರದ್ದು – ದಯವಿಟ್ಟು ಬನ್ನಿ", body: `${shortDate(row.date)} (${slotKn(row.slot)})` },
     }, { kind: "holiday" });
   }
+  if (body.entity_type === "leave_requests" && String(row.status).startsWith("approved")) {
+    await notifyMaid(ctx, {
+      en: { title: "Leave cancelled – please come", body: `${shortDate(row.date)} (${slotEn(row.slot)})` },
+      kn: { title: "ರಜೆ ರದ್ದು – ದಯವಿಟ್ಟು ಬನ್ನಿ", body: `${shortDate(row.date)} (${slotKn(row.slot)})` },
+    }, { kind: "leave" });
+  }
   return { item: row };
 });

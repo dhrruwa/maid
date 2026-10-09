@@ -131,6 +131,18 @@ class _LeaveScreenState extends State<LeaveScreen> {
     }
   }
 
+  /// The cook will come after all: an approved leave that hasn't happened yet
+  /// can be cancelled. The cook's phone is told to come.
+  Future<void> _cancel(Map l) async {
+    final ok = await confirm(context, 'Cancel this leave?',
+        '${longDate(l['date'])} (${slotLabel(l['slot'])}). The cook will be told to come, and it counts as a normal working day.',
+        ok: 'Cancel leave', danger: true);
+    if (!ok || !mounted) return;
+    final r = await busy(context, () => Api.call('delete_item', {'entity_type': 'leave_requests', 'id': l['id']}),
+        success: 'Leave cancelled');
+    if (r != null) AppState.i.changed();
+  }
+
   Future<void> _decide(Map l, String decision) async {
     final r = await busy(context, () => Api.call('decide_leave', {'id': l['id'], 'decision': decision}),
         success: 'Saved – the cook has been notified');
@@ -147,6 +159,8 @@ class _LeaveScreenState extends State<LeaveScreen> {
       body = const Center(child: Text('No leave requests yet'));
     } else {
       final pending = _leaves!.where((l) => l['status'] == 'pending').toList();
+      final today = ymd(istToday());
+      bool cancellable(Map l) => '${l['status']}'.startsWith('approved') && '${l['date']}'.compareTo(today) >= 0;
       final done = _leaves!.where((l) => l['status'] != 'pending').toList();
       body = RefreshIndicator(
         onRefresh: _load,
@@ -169,8 +183,10 @@ class _LeaveScreenState extends State<LeaveScreen> {
                     subtitle: Text([
                       if ((l['reason'] ?? '').toString().isNotEmpty) '"${l['reason']}"',
                       if (l['decided_at'] != null) 'Decided ${istDateTime(l['decided_at'])}',
+                      if (cancellable(l)) 'Tap to cancel this leave',
                     ].join('\n')),
                     trailing: LeaveStatusChip(status: '${l['status']}'),
+                    onTap: cancellable(l) ? () => _cancel(l) : null,
                   ),
               ]),
             ),
